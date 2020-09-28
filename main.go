@@ -1,24 +1,18 @@
 package main
 
-import "github.com/gin-gonic/gin"
+import (
+	"github.com/gin-gonic/gin"
+	"go-there/gopath"
+	"net/http"
+)
 
 func main() {
-	r := gin.Default()
+	e := gin.New()
 
-	api := r.Group("/api")
-	{
-		api.POST("/create")
-		api.GET("/:user")
-	}
+	e.Use(gin.Logger())
+	e.Use(gin.Recovery())
 
-	goPath := r.Group("/go")
-	{
-		goPath.GET("/:path", func(c *gin.Context) {
-			c.JSON(200, gin.H{
-				"message": c.Param("path"),
-			})
-		})
-	}
+	gopath.Init(e)
 
-	r.Run()
+	_ = http.ListenAndServe("0.0.0.0:8080", e)
 }
