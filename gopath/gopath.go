@@ -1,11 +1,19 @@
 package gopath
 
-import "github.com/gin-gonic/gin"
+import (
+	"github.com/gin-gonic/gin"
+	"go-there/data"
+)
 
-func Init(e *gin.Engine)  {
-	goPath := e.Group("/go")
-	{
-		goPath.GET("/:path", pathHandler)
-	}
+type DataSourcer interface {
+	SelectUser(username string) data.User
+	InsertUser(user data.User) error
+	DeleteUser(username string) error
 }
 
+func Init(e *gin.Engine, ds DataSourcer) {
+	goPath := e.Group("/go")
+	{
+		goPath.GET("/:path", getPathHandler(ds))
+	}
+}

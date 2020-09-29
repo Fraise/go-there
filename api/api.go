@@ -2,13 +2,19 @@ package api
 
 import (
 	"github.com/gin-gonic/gin"
+	"go-there/data"
 )
 
+type DataSourcer interface {
+	SelectUser(username string) data.User
+	InsertUser(user data.User) error
+	DeleteUser(username string) error
+}
 
-func MakeApi(e *gin.Engine)  {
+func Init(e *gin.Engine, ds DataSourcer) {
 	api := e.Group("/api")
 	{
-		api.POST("/users", createHandler)
-		api.GET("/users/:user", userHandler)
+		api.POST("/users", getCreateHandler(ds))
+		api.GET("/users/:user", getUserHandler(ds))
 	}
 }
