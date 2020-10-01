@@ -48,23 +48,34 @@ func (ds *DataSource) SelectUser(username string) (data.User, error) {
 	return u, nil
 }
 
-func (ds *DataSource) SelectUserPassword(username string) (data.Password, error) {
-	p := data.Password{}
+func (ds *DataSource) SelectUserPassword(username string) ([]byte, error) {
+	p := make([]byte, 0)
 	err := ds.db.Get(&p, ds.db.Rebind("SELECT password_salt,password_hash FROM users WHERE username=?"), username)
 
 	if err != nil {
-		return data.Password{}, err
+		return []byte{}, err
 	}
 
 	return p, nil
 }
 
-func (ds *DataSource) SelectUserApiKey(username string) (data.ApiKey, error) {
-	ak := data.ApiKey{}
+func (ds *DataSource) SelectUserApiKey(username string) ([]byte, error) {
+	ak := make([]byte, 0)
 	err := ds.db.Get(&ak, ds.db.Rebind("SELECT api_key_salt,api_key_hash FROM users WHERE username=?"), username)
 
 	if err != nil {
-		return data.ApiKey{}, err
+		return []byte{}, err
+	}
+
+	return ak, nil
+}
+
+func (ds *DataSource) SelectApiKey(apiKey string) ([]byte, error) {
+	ak := make([]byte, 0)
+	err := ds.db.Get(&ak, ds.db.Rebind("SELECT api_key_hash FROM users WHERE api_key_hash=?"), apiKey)
+
+	if err != nil {
+		return []byte{}, err
 	}
 
 	return ak, nil

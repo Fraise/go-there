@@ -40,8 +40,8 @@ func main() {
 		log.Fatal().Err(err).Send()
 	}
 
-	gopath.Init(e, ds)
-	api.Init(e, ds)
+	gopath.Init(conf, e, ds)
+	api.Init(conf, e, ds)
 
 	s := http.Server{
 		Addr:    "0.0.0.0:8080",
