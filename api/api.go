@@ -6,7 +6,9 @@ import (
 )
 
 type DataSourcer interface {
-	SelectUser(username string) data.User
+	SelectUser(username string) (data.User, error)
+	SelectUserPassword(username string) (data.Password, error)
+	SelectUserApiKey(username string) (data.ApiKey, error)
 	InsertUser(user data.User) error
 	DeleteUser(username string) error
 }
