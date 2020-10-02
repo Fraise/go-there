@@ -1,6 +1,7 @@
 package datasource
 
 import (
+	"database/sql"
 	"fmt"
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/jackc/pgx/v4"
@@ -50,7 +51,7 @@ func (ds *DataSource) SelectUser(username string) (data.User, error) {
 
 func (ds *DataSource) SelectUserPassword(username string) ([]byte, error) {
 	p := make([]byte, 0)
-	err := ds.db.Get(&p, ds.db.Rebind("SELECT password_salt,password_hash FROM users WHERE username=?"), username)
+	err := ds.db.Get(&p, ds.db.Rebind("SELECT password_hash FROM users WHERE username=?"), username)
 
 	if err != nil {
 		return []byte{}, err
@@ -61,7 +62,7 @@ func (ds *DataSource) SelectUserPassword(username string) ([]byte, error) {
 
 func (ds *DataSource) SelectUserApiKey(username string) ([]byte, error) {
 	ak := make([]byte, 0)
-	err := ds.db.Get(&ak, ds.db.Rebind("SELECT api_key_salt,api_key_hash FROM users WHERE username=?"), username)
+	err := ds.db.Get(&ak, ds.db.Rebind("SELECT api_key_hash FROM users WHERE username=?"), username)
 
 	if err != nil {
 		return []byte{}, err
@@ -87,4 +88,20 @@ func (ds *DataSource) InsertUser(user data.User) error {
 
 func (ds *DataSource) DeleteUser(username string) error {
 	return nil
+}
+
+func (ds *DataSource) GetTarget(path string) (string, error) {
+	t := ""
+	err := ds.db.Get(&t, ds.db.Rebind("SELECT target FROM go WHERE path=?"), path)
+
+	if err != nil {
+		switch err {
+		case sql.ErrNoRows:
+			return "", data.ErrSqlNoRow
+		default:
+			return "", err
+		}
+	}
+
+	return t, nil
 }

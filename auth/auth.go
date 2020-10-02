@@ -26,23 +26,7 @@ func GetAuthMiddleware(ds DataSourcer) func(c *gin.Context) {
 			return
 		}
 
-		if l.Username != "" {
-			u, err := ds.SelectUser(l.Username)
-
-			if err != nil {
-				c.AbortWithStatus(http.StatusInternalServerError)
-				log.Error().Err(err).Msg("database error")
-				return
-			}
-
-			err = bcrypt.CompareHashAndPassword(u.PasswordHash, []byte(l.Password))
-
-			if err != nil {
-				c.AbortWithStatus(http.StatusUnauthorized)
-				log.Info().Err(err).Msg("authentication failed")
-				return
-			}
-		} else if l.ApiKey != "" {
+		if l.ApiKey != "" {
 			ak, err := ds.SelectApiKey(l.ApiKey)
 
 			if err != nil {
@@ -58,6 +42,24 @@ func GetAuthMiddleware(ds DataSourcer) func(c *gin.Context) {
 				log.Info().Err(err).Msg("authentication failed")
 				return
 			}
+		} else if l.Username != "" {
+			u, err := ds.SelectUser(l.Username)
+
+			if err != nil {
+				c.AbortWithStatus(http.StatusInternalServerError)
+				log.Error().Err(err).Msg("database error")
+				return
+			}
+
+			err = bcrypt.CompareHashAndPassword(u.PasswordHash, []byte(l.Password))
+
+			if err != nil {
+				c.AbortWithStatus(http.StatusUnauthorized)
+				log.Info().Err(err).Msg("authentication failed")
+				return
+			}
+		} else {
+			c.AbortWithStatus(http.StatusUnauthorized)
 		}
 	}
 }

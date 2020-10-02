@@ -14,12 +14,13 @@ type DataSourcer interface {
 	SelectApiKey(apiKey string) ([]byte, error)
 	InsertUser(user data.User) error
 	DeleteUser(username string) error
+	GetTarget(path string) (string, error)
 }
 
 func Init(conf *config.Configuration, e *gin.Engine, ds DataSourcer) {
 	goPath := e.Group("/go")
 
-	if conf.Server.AuthApi {
+	if conf.Server.AuthRedirect {
 		goPath.Use(auth.GetAuthMiddleware(ds))
 	}
 
