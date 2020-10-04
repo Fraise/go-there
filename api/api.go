@@ -24,7 +24,12 @@ func Init(conf *config.Configuration, e *gin.Engine, ds DataSourcer) {
 		api.Use(auth.GetAuthMiddleware(ds))
 	}
 
-	api.POST("/users", getCreateHandler(ds))
 	api.GET("/users/:user", getUserHandler(ds))
+
+	if conf.Server.AuthCreateUser {
+		api.POST("/api/users", getCreateHandler(ds)).Use(auth.GetAuthMiddleware(ds))
+	} else {
+		api.POST("/api/users", getCreateHandler(ds))
+	}
 
 }

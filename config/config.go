@@ -16,10 +16,11 @@ type Configuration struct {
 }
 
 type Server struct {
-	ListenAddress string
-	ListenPort    int
-	AuthApi       bool
-	AuthRedirect  bool
+	ListenAddress  string
+	ListenPort     int
+	AuthApi        bool
+	AuthCreateUser bool
+	AuthRedirect   bool
 }
 
 type Cache struct {

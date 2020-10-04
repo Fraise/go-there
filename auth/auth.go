@@ -73,7 +73,7 @@ func GetAuthMiddleware(ds DataSourcer) func(c *gin.Context) {
 				return
 			}
 
-			akHash, err := ds.SelectApiKeyHashBySalt(string(salt))
+			u, err := ds.SelectUserLoginByApiKeySalt(string(salt))
 
 			if err != nil {
 				c.AbortWithStatus(http.StatusInternalServerError)
@@ -81,16 +81,19 @@ func GetAuthMiddleware(ds DataSourcer) func(c *gin.Context) {
 				return
 			}
 
-			err = bcrypt.CompareHashAndPassword(akHash, ak)
+			err = bcrypt.CompareHashAndPassword(u.ApiKeyHash, ak)
 
 			if err != nil {
 				c.AbortWithStatus(http.StatusUnauthorized)
 				log.Info().Err(err).Msg("authentication failed")
 				return
 			}
+
+			// Key track of tyhe user if he successfuly authenticated
+			c.Keys["user"] = u
 		} else if l.Username != "" {
 			// If we receive a username+password
-			u, err := ds.SelectUser(l.Username)
+			u, err := ds.SelectUserLogin(l.Username)
 
 			if err != nil {
 				c.AbortWithStatus(http.StatusInternalServerError)
@@ -105,6 +108,9 @@ func GetAuthMiddleware(ds DataSourcer) func(c *gin.Context) {
 				log.Info().Err(err).Msg("authentication failed")
 				return
 			}
+
+			// Key track of tyhe user if he successfuly authenticated
+			c.Keys["user"] = u
 		} else {
 			c.AbortWithStatus(http.StatusUnauthorized)
 		}

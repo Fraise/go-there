@@ -12,3 +12,8 @@ type Login struct {
 	Password string `form:"password" json:"password"`
 	ApiKey   string `form:"api_key" json:"api_key"`
 }
+
+type CreateUser struct {
+	CreateUsername string `json:"create_username"`
+	CreatePassword string `json:"create_password"`
+}
