@@ -49,18 +49,18 @@ func (ds *DataSource) SelectUser(username string) (data.User, error) {
 	return u, nil
 }
 
-func (ds *DataSource) SelectUserPassword(username string) ([]byte, error) {
-	p := make([]byte, 0)
-	err := ds.db.Get(&p, ds.db.Rebind("SELECT password_hash FROM users WHERE username=?"), username)
+func (ds *DataSource) SelectUserLogin(username string) (data.User, error) {
+	u := data.User{}
+	err := ds.db.Get(&u, ds.db.Rebind("SELECT username,is_admin,password_hash FROM users WHERE username=?"), username)
 
 	if err != nil {
-		return []byte{}, err
+		return data.User{}, err
 	}
 
-	return p, nil
+	return u, nil
 }
 
-func (ds *DataSource) SelectUserApiKey(username string) ([]byte, error) {
+func (ds *DataSource) SelectApiKeyHashByUser(username string) ([]byte, error) {
 	ak := make([]byte, 0)
 	err := ds.db.Get(&ak, ds.db.Rebind("SELECT api_key_hash FROM users WHERE username=?"), username)
 
@@ -71,9 +71,20 @@ func (ds *DataSource) SelectUserApiKey(username string) ([]byte, error) {
 	return ak, nil
 }
 
-func (ds *DataSource) SelectApiKey(apiKey string) ([]byte, error) {
+func (ds *DataSource) SelectUserLoginByApiKeySalt(apiKeySalt string) (data.User, error) {
+	u := data.User{}
+	err := ds.db.Get(&u, ds.db.Rebind("SELECT username,is_admin,api_key_hash FROM users WHERE api_key_salt=?"), apiKeySalt)
+
+	if err != nil {
+		return data.User{}, err
+	}
+
+	return u, nil
+}
+
+func (ds *DataSource) SelectApiKeyHashBySalt(apiKeySalt string) ([]byte, error) {
 	ak := make([]byte, 0)
-	err := ds.db.Get(&ak, ds.db.Rebind("SELECT api_key_hash FROM users WHERE api_key_hash=?"), apiKey)
+	err := ds.db.Get(&ak, ds.db.Rebind("SELECT api_key_hash FROM users WHERE api_key_salt=?"), apiKeySalt)
 
 	if err != nil {
 		return []byte{}, err

@@ -9,9 +9,10 @@ import (
 
 type DataSourcer interface {
 	SelectUser(username string) (data.User, error)
-	SelectUserPassword(username string) ([]byte, error)
-	SelectUserApiKey(username string) ([]byte, error)
-	SelectApiKey(apiKey string) ([]byte, error)
+	SelectUserLogin(username string) (data.User, error)
+	SelectApiKeyHashByUser(username string) ([]byte, error)
+	SelectUserLoginByApiKeySalt(apiKeySalt string) (data.User, error)
+	SelectApiKeyHashBySalt(apiKeySalt string) ([]byte, error)
 	InsertUser(user data.User) error
 	DeleteUser(username string) error
 }
