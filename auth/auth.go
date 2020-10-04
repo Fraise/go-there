@@ -2,6 +2,8 @@ package auth
 
 import (
 	"bytes"
+	"crypto/rand"
+	"encoding/base64"
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog/log"
 	"go-there/data"
@@ -38,6 +40,19 @@ func GetHashFromPassword(password string) ([]byte, []byte, error) {
 	// 3 = Salt+Hash, the salt should be 22 bytes long and hash 31 bytes long
 
 	return hash, hashArr[3][:22], nil
+}
+
+func GenerateRandomString(n int) (string, error) {
+	b := make([]byte, n)
+
+	_, err := rand.Read(b)
+
+	// If less than n bytes are read, an error is returned
+	if err != nil {
+		return "", err
+	}
+
+	return base64.URLEncoding.EncodeToString(b), nil
 }
 
 // validateApiKey takes an api key and return (salt, apikey, error).
@@ -89,7 +104,7 @@ func GetAuthMiddleware(ds DataSourcer) func(c *gin.Context) {
 				return
 			}
 
-			// Key track of tyhe user if he successfuly authenticated
+			// Keep track of the user if he successfully authenticated
 			c.Keys["user"] = u
 		} else if l.Username != "" {
 			// If we receive a username+password
@@ -109,7 +124,7 @@ func GetAuthMiddleware(ds DataSourcer) func(c *gin.Context) {
 				return
 			}
 
-			// Key track of tyhe user if he successfuly authenticated
+			// Keep track of the user if he successfully authenticated
 			c.Keys["user"] = u
 		} else {
 			c.AbortWithStatus(http.StatusUnauthorized)

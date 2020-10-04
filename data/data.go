@@ -4,6 +4,7 @@ type User struct {
 	Username     string `db:"username" json:"username"`
 	IsAdmin      bool   `db:"is_admin" json:"is_admin"`
 	PasswordHash []byte `db:"password_hash" json:"password_hash"`
+	ApiKeySalt   []byte `db:"api_key_salt" json:"api_key_salt"`
 	ApiKeyHash   []byte `db:"api_key_hash" json:"api_key_hash"`
 }
 
@@ -14,6 +15,10 @@ type Login struct {
 }
 
 type CreateUser struct {
-	CreateUsername string `json:"create_username"`
-	CreatePassword string `json:"create_password"`
+	CreateUser     string `json:"create_user" binding:"required"`
+	CreatePassword string `json:"create_password" binding:"required"`
+}
+
+type CreateUserResponse struct {
+	ApiKey string `json:"api_key"`
 }

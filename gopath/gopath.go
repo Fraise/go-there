@@ -15,6 +15,7 @@ type DataSourcer interface {
 	SelectApiKeyHashBySalt(apiKeySalt string) ([]byte, error)
 	InsertUser(user data.User) error
 	DeleteUser(username string) error
+	GetTarget(path string) (string, error)
 }
 
 func Init(conf *config.Configuration, e *gin.Engine, ds DataSourcer) {
