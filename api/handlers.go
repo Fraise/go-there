@@ -141,7 +141,7 @@ func getUpdateUserHandler(ds DataSourcer) func(c *gin.Context) {
 			return
 		}
 
-		u := data.User{}
+		u := data.User{Username: requestedUser}
 		ar := data.ApiKeyResponse{}
 
 		if pu.PatchPassword != "" {

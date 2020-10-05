@@ -127,7 +127,7 @@ func (ds *DataSource) UpdatetUserApiKey(user data.User) error {
 }
 
 func (ds *DataSource) DeleteUser(username string) error {
-	_, err := ds.db.NamedExec("DELETE FROM users WHERE username=:username", username)
+	_, err := ds.db.Exec(ds.db.Rebind("DELETE FROM users WHERE username=?"), username)
 
 	if err != nil {
 		return err

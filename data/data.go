@@ -25,14 +25,15 @@ type CreateUser struct {
 	CreatePassword string `json:"create_password" binding:"required"`
 }
 
+// PatchUser represents the input used to change a user password or request a new API key.
 type PatchUser struct {
-	PatchPassword string `json:"new_password" binding:"required"`
-	PatchApiKey   bool   `json:"new_api_key" binding:"required"`
+	PatchPassword string `json:"new_password"`
+	PatchApiKey   bool   `json:"new_api_key"`
 }
 
 // ApiKeyResponse should be returned when creating a user or regenerating an API key.
 type ApiKeyResponse struct {
-	ApiKey string `json:"api_key"`
+	ApiKey string `json:"api_key,omitempty"`
 }
 
 // ErrorResponse should be returned to the user when additional context is needed when an error occurs.
