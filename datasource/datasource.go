@@ -3,6 +3,7 @@ package datasource
 import (
 	"database/sql"
 	"fmt"
+	"github.com/go-sql-driver/mysql"
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/jackc/pgx/v4"
 	"github.com/jmoiron/sqlx"
@@ -94,7 +95,23 @@ func (ds *DataSource) SelectApiKeyHashBySalt(apiKeySalt string) ([]byte, error) 
 }
 
 func (ds *DataSource) InsertUser(user data.User) error {
-	return nil
+	_, err := ds.db.NamedExec(
+		"INSERT INTO users (username,is_admin,password_hash,api_key_salt,api_key_hash) "+
+			"VALUES (:username,:is_admin,:password_hash,:api_key_salt,:api_key_hash)", user)
+
+	if err != nil {
+		if e, ok := err.(*mysql.MySQLError); ok {
+			// mysql duplicate row
+			if e.Number == 1062 {
+				return data.ErrSqlDuplicateRow
+			}
+		} else {
+			return data.ErrSql
+		}
+
+	}
+
+	return err
 }
 
 func (ds *DataSource) DeleteUser(username string) error {

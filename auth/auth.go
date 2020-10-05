@@ -42,7 +42,7 @@ func GetHashFromPassword(password string) ([]byte, []byte, error) {
 	return hash, hashArr[3][:22], nil
 }
 
-func GenerateRandomString(n int) (string, error) {
+func GenerateRandomB64String(n int) (string, error) {
 	b := make([]byte, n)
 
 	_, err := rand.Read(b)
@@ -52,10 +52,12 @@ func GenerateRandomString(n int) (string, error) {
 		return "", err
 	}
 
+	log.Info().Msg(base64.StdEncoding.EncodeToString(b))
+
 	return base64.URLEncoding.EncodeToString(b), nil
 }
 
-// validateApiKey takes an api key and return (salt, apikey, error).
+// validateApiKey takes an api key with the salt encoded in b64 and returns (salt, apikey, error).
 func validateApiKey(apiKey string) ([]byte, []byte, error) {
 	apiKeyArr := bytes.Split([]byte(apiKey), []byte("."))
 
@@ -63,7 +65,13 @@ func validateApiKey(apiKey string) ([]byte, []byte, error) {
 		return nil, nil, data.ErrInvalidKey
 	}
 
-	return apiKeyArr[0], apiKeyArr[1], nil
+	decodedSalt, err := base64.URLEncoding.DecodeString(string(apiKeyArr[0]))
+
+	if err != nil {
+		return nil, nil, data.ErrInvalidKey
+	}
+
+	return decodedSalt, apiKeyArr[1], nil
 }
 
 // GetAuthMiddleware returns a gin middleware used for authentication. This middleware first tries bind the available

@@ -22,3 +22,7 @@ type CreateUser struct {
 type CreateUserResponse struct {
 	ApiKey string `json:"api_key"`
 }
+
+type ErrorResponse struct {
+	Error string `json:"error"`
+}

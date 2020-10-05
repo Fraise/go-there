@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/base64"
 	"github.com/gin-gonic/gin"
 	"go-there/auth"
 	"go-there/data"
@@ -25,7 +26,7 @@ func getCreateHandler(ds DataSourcer) func(c *gin.Context) {
 			return
 		}
 
-		apkiKey, err := auth.GenerateRandomString(16)
+		apkiKey, err := auth.GenerateRandomB64String(16)
 
 		if err != nil {
 			c.AbortWithStatus(http.StatusInternalServerError)
@@ -50,11 +51,20 @@ func getCreateHandler(ds DataSourcer) func(c *gin.Context) {
 		err = ds.InsertUser(u)
 
 		if err != nil {
-			c.AbortWithStatus(http.StatusInternalServerError)
-			return
+			if err == data.ErrSqlDuplicateRow {
+				c.AbortWithStatusJSON(http.StatusBadRequest, data.ErrorResponse{Error: "user already exists"})
+				return
+			} else {
+				c.AbortWithStatus(http.StatusInternalServerError)
+				return
+			}
 		}
 
-		c.JSON(http.StatusOK, data.CreateUserResponse{ApiKey: string(apiKeySalt) + "." + apkiKey})
+		c.JSON(
+			http.StatusOK,
+			data.CreateUserResponse{
+				ApiKey: base64.URLEncoding.EncodeToString(apiKeySalt) + "." + apkiKey,
+			})
 	}
 }
 
