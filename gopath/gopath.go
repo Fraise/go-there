@@ -19,12 +19,15 @@ type DataSourcer interface {
 }
 
 func Init(conf *config.Configuration, e *gin.Engine, ds DataSourcer) {
-	goPath := e.Group("/go")
-
-	if conf.Server.AuthRedirect {
-		goPath.Use(auth.GetAuthMiddleware(ds))
+	if !conf.Endpoints["/go"].Enabled {
+		return
 	}
+
+	goPath := e.Group("/go")
 
 	goPath.GET("/:path", getPathHandler(ds))
 
+	if conf.Endpoints["go"].NeedAuth {
+		goPath.Use(auth.GetAuthMiddleware(ds))
+	}
 }

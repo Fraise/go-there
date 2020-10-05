@@ -10,6 +10,21 @@ type User struct {
 	ApiKeyHash   []byte `db:"api_key_hash" json:"api_key_hash,omitempty"`
 }
 
+type Path struct {
+	Path   string `db:"path" json:"path" binding:"required"`
+	Target string `db:"target" json:"target" binding:"required"`
+	User   string `db:"user"`
+}
+
+type CreatePath struct {
+	Path   string `json:"path" binding:"required"`
+	Target string `json:"target" binding:"required"`
+}
+
+type DeletePath struct {
+	Path string `json:"path"`
+}
+
 // Login represents the information given by a user to authenticate. It should be used to unmarshal incoming
 // authentication data.
 type Login struct {

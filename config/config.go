@@ -11,18 +11,22 @@ var conf *Configuration
 
 // Configuration contains all the information needed to run the application
 type Configuration struct {
-	Server   Server
-	Cache    Cache
-	Database Database
+	Server    Server
+	Cache     Cache
+	Database  Database
+	Endpoints map[string]Endpoint
+}
+
+type Endpoint struct {
+	Enabled   bool
+	NeedAuth  bool
+	NeedAdmin bool
 }
 
 // Server reoresents the server configuration.
 type Server struct {
-	ListenAddress  string
-	ListenPort     int
-	AuthApi        bool
-	AuthCreateUser bool
-	AuthRedirect   bool
+	ListenAddress string
+	ListenPort    int
 }
 
 // Cache represents the cache configuration.

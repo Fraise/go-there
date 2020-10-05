@@ -151,3 +151,27 @@ func (ds *DataSource) GetTarget(path string) (string, error) {
 
 	return t, nil
 }
+
+func (ds *DataSource) InsertPath(path data.Path) error {
+	_, err := ds.db.NamedExec("INSERT INTO go (path,target,user,is_public) VALUES (:path,:target,:user,:is_public)", path)
+
+	if err != nil {
+		if e, ok := err.(*mysql.MySQLError); ok {
+			// mysql duplicate row
+			if e.Number == 1062 {
+				return data.ErrSqlDuplicateRow
+			}
+		} else {
+			return data.ErrSql
+		}
+
+	}
+
+	return err
+}
+
+func (ds *DataSource) DeletePath(path data.Path) error {
+	_, err := ds.db.NamedExec("DELETE FROM go WHERE path=:path", path)
+
+	return err
+}
