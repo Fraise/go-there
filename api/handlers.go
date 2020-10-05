@@ -8,6 +8,10 @@ import (
 	"net/http"
 )
 
+// getCreateHandler returns a gin handler which tries to insert a new user in the database. It first bind provided JSON
+// data (or fails), then hashes the password, generates an API key and tries to insert everything in the database. If it
+// succeeds, an API key is returned to the user, if the new user already exists, it returns 400 and "user already
+// exists" in the response body.
 func getCreateHandler(ds DataSourcer) func(c *gin.Context) {
 	return func(c *gin.Context) {
 		cu := data.CreateUser{}
@@ -62,7 +66,7 @@ func getCreateHandler(ds DataSourcer) func(c *gin.Context) {
 
 		c.JSON(
 			http.StatusOK,
-			data.CreateUserResponse{
+			data.ApiKeyResponse{
 				ApiKey: base64.URLEncoding.EncodeToString(apiKeySalt) + "." + apkiKey,
 			})
 	}
