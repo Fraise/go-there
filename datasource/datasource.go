@@ -114,7 +114,25 @@ func (ds *DataSource) InsertUser(user data.User) error {
 	return err
 }
 
+func (ds *DataSource) UpdatetUserPassword(user data.User) error {
+	_, err := ds.db.NamedExec("UPDATE users SET password_hash=:password_hash WHERE username=:username", user)
+
+	return err
+}
+
+func (ds *DataSource) UpdatetUserApiKey(user data.User) error {
+	_, err := ds.db.NamedExec("UPDATE users SET api_key_hash=:api_key_hash,api_key_salt=:api_key_salt WHERE username=:username", user)
+
+	return err
+}
+
 func (ds *DataSource) DeleteUser(username string) error {
+	_, err := ds.db.NamedExec("DELETE FROM users WHERE username=:username", username)
+
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 

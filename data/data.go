@@ -5,9 +5,9 @@ package data
 type User struct {
 	Username     string `db:"username" json:"username"`
 	IsAdmin      bool   `db:"is_admin" json:"is_admin"`
-	PasswordHash []byte `db:"password_hash" json:"password_hash"`
-	ApiKeySalt   []byte `db:"api_key_salt" json:"api_key_salt"`
-	ApiKeyHash   []byte `db:"api_key_hash" json:"api_key_hash"`
+	PasswordHash []byte `db:"password_hash" json:"password_hash,omitempty"`
+	ApiKeySalt   []byte `db:"api_key_salt" json:"api_key_salt,omitempty"`
+	ApiKeyHash   []byte `db:"api_key_hash" json:"api_key_hash,omitempty"`
 }
 
 // Login represents the information given by a user to authenticate. It should be used to unmarshal incoming
@@ -23,6 +23,11 @@ type Login struct {
 type CreateUser struct {
 	CreateUser     string `json:"create_user" binding:"required"`
 	CreatePassword string `json:"create_password" binding:"required"`
+}
+
+type PatchUser struct {
+	PatchPassword string `json:"new_password" binding:"required"`
+	PatchApiKey   bool   `json:"new_api_key" binding:"required"`
 }
 
 // ApiKeyResponse should be returned when creating a user or regenerating an API key.

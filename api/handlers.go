@@ -37,7 +37,7 @@ func getCreateHandler(ds DataSourcer) func(c *gin.Context) {
 			return
 		}
 
-		apkiKeyHash, apiKeySalt, err := auth.GetHashFromPassword(apkiKey)
+		apiKeyHash, apiKeySalt, err := auth.GetHashFromPassword(apkiKey)
 
 		if err != nil {
 			c.AbortWithStatus(http.StatusInternalServerError)
@@ -49,13 +49,14 @@ func getCreateHandler(ds DataSourcer) func(c *gin.Context) {
 			IsAdmin:      false,
 			PasswordHash: hash,
 			ApiKeySalt:   apiKeySalt,
-			ApiKeyHash:   apkiKeyHash,
+			ApiKeyHash:   apiKeyHash,
 		}
 
 		err = ds.InsertUser(u)
 
 		if err != nil {
 			if err == data.ErrSqlDuplicateRow {
+				// TODO handle duplicate salt
 				c.AbortWithStatusJSON(http.StatusBadRequest, data.ErrorResponse{Error: "user already exists"})
 				return
 			} else {
@@ -74,7 +75,122 @@ func getCreateHandler(ds DataSourcer) func(c *gin.Context) {
 
 func getUserHandler(ds DataSourcer) func(c *gin.Context) {
 	return func(c *gin.Context) {
-		u, _ := ds.SelectUser(c.Param("user"))
-		c.JSON(http.StatusOK, u)
+		requestedUser := c.Param("user")
+
+		loggedUser := auth.GetLoggedUser(c)
+
+		// If an user is logged, make sure he can only see his data if he's not admin
+		if loggedUser.Username != "" && loggedUser.Username != requestedUser && !loggedUser.IsAdmin {
+			c.AbortWithStatus(http.StatusUnauthorized)
+			return
+		}
+
+		u, err := ds.SelectUser(requestedUser)
+
+		if err != nil {
+			c.AbortWithStatus(http.StatusInternalServerError)
+			return
+		}
+
+		// Clean the data before responding to the request
+		c.JSON(http.StatusOK, data.User{Username: u.Username, IsAdmin: u.IsAdmin})
+	}
+}
+
+func getDeleteUserHandler(ds DataSourcer) func(c *gin.Context) {
+	return func(c *gin.Context) {
+		requestedUser := c.Param("user")
+
+		loggedUser := auth.GetLoggedUser(c)
+
+		// If an user is logged, make sure he can only see his data if he's not admin
+		if loggedUser.Username != "" && loggedUser.Username != requestedUser && !loggedUser.IsAdmin {
+			c.AbortWithStatus(http.StatusUnauthorized)
+			return
+		}
+
+		err := ds.DeleteUser(requestedUser)
+
+		if err != nil {
+			c.AbortWithStatus(http.StatusInternalServerError)
+			return
+		}
+
+		c.Status(http.StatusOK)
+	}
+}
+
+func getUpdateUserHandler(ds DataSourcer) func(c *gin.Context) {
+	return func(c *gin.Context) {
+		requestedUser := c.Param("user")
+
+		loggedUser := auth.GetLoggedUser(c)
+
+		// If an user is logged, make sure he can only see his data if he's not admin
+		if loggedUser.Username != "" && loggedUser.Username != requestedUser && !loggedUser.IsAdmin {
+			c.AbortWithStatus(http.StatusUnauthorized)
+			return
+		}
+
+		pu := data.PatchUser{}
+
+		err := c.ShouldBindJSON(&pu)
+
+		if err != nil {
+			c.AbortWithStatus(http.StatusBadRequest)
+			return
+		}
+
+		u := data.User{}
+		ar := data.ApiKeyResponse{}
+
+		if pu.PatchPassword != "" {
+			// We don't need to store the salt for a password
+			hash, _, err := auth.GetHashFromPassword(pu.PatchPassword)
+
+			if err != nil {
+				c.AbortWithStatus(http.StatusInternalServerError)
+				return
+			}
+
+			u.PasswordHash = hash
+
+			err = ds.UpdatetUserPassword(u)
+
+			if err != nil {
+				c.AbortWithStatus(http.StatusInternalServerError)
+				return
+			}
+		}
+
+		if pu.PatchApiKey {
+			apiKey, err := auth.GenerateRandomB64String(16)
+
+			if err != nil {
+				c.AbortWithStatus(http.StatusInternalServerError)
+				return
+			}
+
+			apiKeyHash, apiKeySalt, err := auth.GetHashFromPassword(apiKey)
+
+			if err != nil {
+				c.AbortWithStatus(http.StatusInternalServerError)
+				return
+			}
+
+			u.ApiKeyHash = apiKeyHash
+			u.ApiKeySalt = apiKeySalt
+
+			err = ds.UpdatetUserApiKey(u)
+
+			if err != nil {
+				c.AbortWithStatus(http.StatusInternalServerError)
+				return
+			}
+
+			ar.ApiKey = apiKey
+		}
+
+		c.JSON(http.StatusOK, ar)
 	}
 }

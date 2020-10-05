@@ -57,6 +57,17 @@ func GenerateRandomB64String(n int) (string, error) {
 	return base64.URLEncoding.EncodeToString(b), nil
 }
 
+// GetLoggedUser returns the currently logged user, or an empty User otherwise.
+func GetLoggedUser(c *gin.Context) data.User {
+	if c.Keys == nil {
+		return data.User{}
+	}
+
+	u := c.Keys["user"].(data.User)
+
+	return u
+}
+
 // validateApiKey takes an api key with the salt encoded in b64 and returns (salt, apikey, error).
 func validateApiKey(apiKey string) ([]byte, []byte, error) {
 	apiKeyArr := bytes.Split([]byte(apiKey), []byte("."))

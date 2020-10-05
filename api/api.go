@@ -15,6 +15,8 @@ type DataSourcer interface {
 	SelectApiKeyHashBySalt(apiKeySalt string) ([]byte, error)
 	InsertUser(user data.User) error
 	DeleteUser(username string) error
+	UpdatetUserPassword(user data.User) error
+	UpdatetUserApiKey(user data.User) error
 }
 
 func Init(conf *config.Configuration, e *gin.Engine, ds DataSourcer) {
@@ -25,6 +27,8 @@ func Init(conf *config.Configuration, e *gin.Engine, ds DataSourcer) {
 	}
 
 	api.GET("/users/:user", getUserHandler(ds))
+	api.DELETE("/users/:user", getDeleteUserHandler(ds))
+	api.PATCH("/users/:user", getUpdateUserHandler(ds))
 
 	if conf.Server.AuthCreateUser {
 		e.POST("/api/users", getCreateHandler(ds)).Use(auth.GetAuthMiddleware(ds))
