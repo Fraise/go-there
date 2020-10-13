@@ -14,6 +14,7 @@ require (
 	github.com/modern-go/reflect2 v1.0.1 // indirect
 	github.com/pelletier/go-toml v1.8.1
 	github.com/rs/zerolog v1.20.0
+	github.com/stretchr/testify v1.6.1
 	github.com/ugorji/go v1.1.9 // indirect
 	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
 	golang.org/x/sys v0.0.0-20200926100807-9d91bd62050c // indirect
