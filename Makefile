@@ -1,4 +1,7 @@
 .PHONY: build
 
 build:
-	go build -tags=jsoniter .
+	go build -v -tags=jsoniter .
+
+test:
+	go test -v -tags=jsoniter ./...
