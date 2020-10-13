@@ -180,22 +180,34 @@ func GetAuthMiddleware(ds DataSourcer) func(c *gin.Context) {
 // GetPermissionsMiddleware verify that the logged used has the permission to access the requested ressource. A user
 // can only access his profile, and admin can access any profile. This middleware only works on endpoints with an :user
 // parameter.
-func GetPermissionsMiddleware() func(c *gin.Context) {
+func GetPermissionsMiddleware(adminOnly bool) func(c *gin.Context) {
 	return func(c *gin.Context) {
+		loggedUser := GetLoggedUser(c)
+
+		// If admin rights are required
+		if adminOnly && !loggedUser.IsAdmin {
+			c.AbortWithStatus(http.StatusForbidden)
+			return
+		}
+
+		// If the user is admin, always allow access
+		if loggedUser.IsAdmin {
+			return
+		}
+
+		// If no login is required continue, as it is already validated by the auth middleware
+		if loggedUser.Username == "" {
+			return
+		}
+
+		// If an user is logged, make sure he can only see his data if he's not admin
 		reqUser := GetRequestedUser(c)
 
 		if reqUser == "" {
 			return
 		}
 
-		loggedUser := GetLoggedUser(c)
-
-		if loggedUser.Username == "" {
-			return
-		}
-
-		// If an user is logged, make sure he can only see his data if he's not admin
-		if loggedUser.Username != reqUser && !loggedUser.IsAdmin {
+		if loggedUser.Username != reqUser {
 			c.AbortWithStatus(http.StatusForbidden)
 			return
 		}
