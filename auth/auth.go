@@ -63,7 +63,27 @@ func GetLoggedUser(c *gin.Context) data.User {
 		return data.User{}
 	}
 
-	u := c.Keys["user"].(data.User)
+	u, ok := c.Keys["user"].(data.User)
+
+	if !ok {
+		return data.User{}
+	}
+
+	return u
+}
+
+// GetRequestedUser returns the user corresponding to the ressource accessed. It returns "" if the ressource does not
+// belong to any user.
+func GetRequestedUser(c *gin.Context) string {
+	if c.Keys == nil {
+		return ""
+	}
+
+	u, ok := c.Keys["reqUser"].(string)
+
+	if !ok {
+		return ""
+	}
 
 	return u
 }
@@ -127,6 +147,8 @@ func GetAuthMiddleware(ds DataSourcer) func(c *gin.Context) {
 
 			// Keep track of the user if he successfully authenticated
 			c.Keys["user"] = u
+			// Keep track of which user data we want to access
+			c.Keys["reqUser"] = c.Param("user")
 		} else if l.Username != "" {
 			// If we receive a username+password
 			u, err := ds.SelectUserLogin(l.Username)
@@ -147,6 +169,8 @@ func GetAuthMiddleware(ds DataSourcer) func(c *gin.Context) {
 
 			// Keep track of the user if he successfully authenticated
 			c.Keys["user"] = u
+			// Keep track of which user data we want to access
+			c.Keys["reqUser"] = c.Param("user")
 		} else {
 			c.AbortWithStatus(http.StatusUnauthorized)
 		}
@@ -158,7 +182,11 @@ func GetAuthMiddleware(ds DataSourcer) func(c *gin.Context) {
 // parameter.
 func GetPermissionsMiddleware() func(c *gin.Context) {
 	return func(c *gin.Context) {
-		requestedUser := c.Param("user")
+		reqUser := GetRequestedUser(c)
+
+		if reqUser == "" {
+			return
+		}
 
 		loggedUser := GetLoggedUser(c)
 
@@ -167,7 +195,7 @@ func GetPermissionsMiddleware() func(c *gin.Context) {
 		}
 
 		// If an user is logged, make sure he can only see his data if he's not admin
-		if loggedUser.Username != requestedUser && !loggedUser.IsAdmin {
+		if loggedUser.Username != reqUser && !loggedUser.IsAdmin {
 			c.AbortWithStatus(http.StatusForbidden)
 			return
 		}
