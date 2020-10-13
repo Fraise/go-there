@@ -22,43 +22,46 @@ type DataSourcer interface {
 }
 
 func Init(conf *config.Configuration, e *gin.Engine, ds DataSourcer) {
-	// Init /api/users/:user routes
-	api := e.Group("/api")
+	ep := conf.Endpoints["manage_users"]
+	if ep.Enabled {
+		// Init /api/users/:user routes
+		api := e.Group("/api")
 
-	api.GET("/users/:user", getUserHandler(ds))
-	api.DELETE("/users/:user", getDeleteUserHandler(ds))
-	api.PATCH("/users/:user", getUpdateUserHandler(ds))
+		api.GET("/users/:user", getUserHandler(ds))
+		api.DELETE("/users/:user", getDeleteUserHandler(ds))
+		api.PATCH("/users/:user", getUpdateUserHandler(ds))
 
-	if conf.Endpoints["manage_users"].NeedAuth {
-		api.Use(auth.GetAuthMiddleware(ds))
+		if ep.NeedAuth {
+			api.Use(auth.GetAuthMiddleware(ds))
+		}
+
+		api.Use(auth.GetPermissionsMiddleware(ep.NeedAdmin))
 	}
 
-	if conf.Endpoints["manage_users"].NeedAdmin {
-		api.Use(auth.GetPermissionsMiddleware())
+	ep = conf.Endpoints["create_users"]
+	if ep.Enabled {
+		// Init /api/users route
+		userRoute := e.POST("/api/users", getCreateHandler(ds))
+
+		if ep.NeedAuth {
+			userRoute.Use(auth.GetAuthMiddleware(ds))
+		}
+
+		userRoute.Use(auth.GetPermissionsMiddleware(ep.NeedAdmin))
 	}
 
-	// Init /api/users route
-	userRoute := e.POST("/api/users", getCreateHandler(ds))
+	ep = conf.Endpoints["manage_paths"]
+	if ep.Enabled {
+		// Init /api/path route
+		path := e.Group("/api/path")
 
-	if conf.Endpoints["create_users"].NeedAuth {
-		userRoute.Use(auth.GetAuthMiddleware(ds))
-	}
+		path.POST("/", getPostPathHandler(ds))
+		path.DELETE("/", getDeletePathHandler(ds))
 
-	if conf.Endpoints["create_users"].NeedAdmin {
-		userRoute.Use(auth.GetPermissionsMiddleware())
-	}
+		if ep.NeedAuth {
+			path.Use(auth.GetAuthMiddleware(ds))
+		}
 
-	// Init /api/path route
-	path := e.Group("/api/path")
-
-	path.POST("/", getPostPathHandler(ds))
-	path.DELETE("/", getDeletePathHandler(ds))
-
-	if conf.Endpoints["manage_paths"].NeedAuth {
-		path.Use(auth.GetAuthMiddleware(ds))
-	}
-
-	if conf.Endpoints["manage_paths"].NeedAdmin {
-		path.Use(auth.GetPermissionsMiddleware())
+		path.Use(auth.GetPermissionsMiddleware(ep.NeedAdmin))
 	}
 }

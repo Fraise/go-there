@@ -63,7 +63,27 @@ func GetLoggedUser(c *gin.Context) data.User {
 		return data.User{}
 	}
 
-	u := c.Keys["user"].(data.User)
+	u, ok := c.Keys["user"].(data.User)
+
+	if !ok {
+		return data.User{}
+	}
+
+	return u
+}
+
+// GetRequestedUser returns the user corresponding to the ressource accessed. It returns "" if the ressource does not
+// belong to any user.
+func GetRequestedUser(c *gin.Context) string {
+	if c.Keys == nil {
+		return ""
+	}
+
+	u, ok := c.Keys["reqUser"].(string)
+
+	if !ok {
+		return ""
+	}
 
 	return u
 }
@@ -127,6 +147,8 @@ func GetAuthMiddleware(ds DataSourcer) func(c *gin.Context) {
 
 			// Keep track of the user if he successfully authenticated
 			c.Keys["user"] = u
+			// Keep track of which user data we want to access
+			c.Keys["reqUser"] = c.Param("user")
 		} else if l.Username != "" {
 			// If we receive a username+password
 			u, err := ds.SelectUserLogin(l.Username)
@@ -147,6 +169,8 @@ func GetAuthMiddleware(ds DataSourcer) func(c *gin.Context) {
 
 			// Keep track of the user if he successfully authenticated
 			c.Keys["user"] = u
+			// Keep track of which user data we want to access
+			c.Keys["reqUser"] = c.Param("user")
 		} else {
 			c.AbortWithStatus(http.StatusUnauthorized)
 		}
@@ -156,18 +180,34 @@ func GetAuthMiddleware(ds DataSourcer) func(c *gin.Context) {
 // GetPermissionsMiddleware verify that the logged used has the permission to access the requested ressource. A user
 // can only access his profile, and admin can access any profile. This middleware only works on endpoints with an :user
 // parameter.
-func GetPermissionsMiddleware() func(c *gin.Context) {
+func GetPermissionsMiddleware(adminOnly bool) func(c *gin.Context) {
 	return func(c *gin.Context) {
-		requestedUser := c.Param("user")
-
 		loggedUser := GetLoggedUser(c)
 
+		// If admin rights are required
+		if adminOnly && !loggedUser.IsAdmin {
+			c.AbortWithStatus(http.StatusForbidden)
+			return
+		}
+
+		// If the user is admin, always allow access
+		if loggedUser.IsAdmin {
+			return
+		}
+
+		// If no login is required continue, as it is already validated by the auth middleware
 		if loggedUser.Username == "" {
 			return
 		}
 
 		// If an user is logged, make sure he can only see his data if he's not admin
-		if loggedUser.Username != requestedUser && !loggedUser.IsAdmin {
+		reqUser := GetRequestedUser(c)
+
+		if reqUser == "" {
+			return
+		}
+
+		if loggedUser.Username != reqUser {
 			c.AbortWithStatus(http.StatusForbidden)
 			return
 		}
