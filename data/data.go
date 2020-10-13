@@ -10,17 +10,20 @@ type User struct {
 	ApiKeyHash   []byte `db:"api_key_hash" json:"api_key_hash,omitempty"`
 }
 
+// Path contains the informations representing a redirection target internally.
 type Path struct {
 	Path   string `db:"path" json:"path" binding:"required"`
 	Target string `db:"target" json:"target" binding:"required"`
 	User   string `db:"user"`
 }
 
+// CreatePath represents the data sent by the user to add a new redirection path.
 type CreatePath struct {
 	Path   string `json:"path" binding:"required"`
 	Target string `json:"target" binding:"required"`
 }
 
+// DeletePath represents the data sent by the user to delete an existing redirection path.
 type DeletePath struct {
 	Path string `json:"path"`
 }

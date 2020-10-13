@@ -5,23 +5,16 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"github.com/gin-gonic/gin"
-	"github.com/rs/zerolog/log"
 	"go-there/data"
 	"golang.org/x/crypto/bcrypt"
-	"net/http"
 )
 
 const bCryptCost = bcrypt.DefaultCost
 
 // DataSourcer is used to access the mysql database.
 type DataSourcer interface {
-	SelectUser(username string) (data.User, error)
 	SelectUserLogin(username string) (data.User, error)
-	SelectApiKeyHashByUser(username string) ([]byte, error)
 	SelectUserLoginByApiKeySalt(apiKeySalt string) (data.User, error)
-	SelectApiKeyHashBySalt(apiKeySalt string) ([]byte, error)
-	InsertUser(user data.User) error
-	DeleteUser(username string) error
 }
 
 // GetHashFromPassword takes a password, and returns (complete bcrypt hash, salt only, error).
@@ -42,6 +35,8 @@ func GetHashFromPassword(password string) ([]byte, []byte, error) {
 	return hash, hashArr[3][:22], nil
 }
 
+// GenerateRandomB64String creates a random base64 encoded string from using the crypto/rand package from a byte array
+// of length n. If less than n random bytes are generated, an error is returned.
 func GenerateRandomB64String(n int) (string, error) {
 	b := make([]byte, n)
 
@@ -51,8 +46,6 @@ func GenerateRandomB64String(n int) (string, error) {
 	if err != nil {
 		return "", err
 	}
-
-	log.Info().Msg(base64.StdEncoding.EncodeToString(b))
 
 	return base64.URLEncoding.EncodeToString(b), nil
 }
@@ -103,113 +96,4 @@ func validateApiKey(apiKey string) ([]byte, []byte, error) {
 	}
 
 	return decodedSalt, apiKeyArr[1], nil
-}
-
-// GetAuthMiddleware returns a gin middleware used for authentication. This middleware first tries bind the available
-// data contained either in the body or as parameters into a data.Login struct, then tries to authenticate the user
-// with an api key or an user/password if no key is provided.
-func GetAuthMiddleware(ds DataSourcer) func(c *gin.Context) {
-	return func(c *gin.Context) {
-		var l data.Login
-		if err := c.ShouldBind(&l); err != nil {
-			c.AbortWithStatus(http.StatusBadRequest)
-			log.Info().Err(err).Msg("logging failed")
-			return
-		}
-
-		c.Keys = make(map[string]interface{})
-
-		if l.ApiKey != "" {
-			// If we receive an api key
-			salt, ak, err := validateApiKey(l.ApiKey)
-
-			if err != nil {
-				c.AbortWithStatus(http.StatusBadRequest)
-				log.Info().Err(err).Msg("authentication failed")
-				return
-			}
-
-			u, err := ds.SelectUserLoginByApiKeySalt(string(salt))
-
-			if err != nil {
-				c.AbortWithStatus(http.StatusInternalServerError)
-				log.Error().Err(err).Msg("database error")
-				return
-			}
-
-			err = bcrypt.CompareHashAndPassword(u.ApiKeyHash, ak)
-
-			if err != nil {
-				c.AbortWithStatus(http.StatusUnauthorized)
-				log.Info().Err(err).Msg("authentication failed")
-				return
-			}
-
-			// Keep track of the user if he successfully authenticated
-			c.Keys["user"] = u
-			// Keep track of which user data we want to access
-			c.Keys["reqUser"] = c.Param("user")
-		} else if l.Username != "" {
-			// If we receive a username+password
-			u, err := ds.SelectUserLogin(l.Username)
-
-			if err != nil {
-				c.AbortWithStatus(http.StatusInternalServerError)
-				log.Error().Err(err).Msg("database error")
-				return
-			}
-
-			err = bcrypt.CompareHashAndPassword(u.PasswordHash, []byte(l.Password))
-
-			if err != nil {
-				c.AbortWithStatus(http.StatusUnauthorized)
-				log.Info().Err(err).Msg("authentication failed")
-				return
-			}
-
-			// Keep track of the user if he successfully authenticated
-			c.Keys["user"] = u
-			// Keep track of which user data we want to access
-			c.Keys["reqUser"] = c.Param("user")
-		} else {
-			c.AbortWithStatus(http.StatusUnauthorized)
-		}
-	}
-}
-
-// GetPermissionsMiddleware verify that the logged used has the permission to access the requested ressource. A user
-// can only access his profile, and admin can access any profile. This middleware only works on endpoints with an :user
-// parameter.
-func GetPermissionsMiddleware(adminOnly bool) func(c *gin.Context) {
-	return func(c *gin.Context) {
-		loggedUser := GetLoggedUser(c)
-
-		// If admin rights are required
-		if adminOnly && !loggedUser.IsAdmin {
-			c.AbortWithStatus(http.StatusForbidden)
-			return
-		}
-
-		// If the user is admin, always allow access
-		if loggedUser.IsAdmin {
-			return
-		}
-
-		// If no login is required continue, as it is already validated by the auth middleware
-		if loggedUser.Username == "" {
-			return
-		}
-
-		// If an user is logged, make sure he can only see his data if he's not admin
-		reqUser := GetRequestedUser(c)
-
-		if reqUser == "" {
-			return
-		}
-
-		if loggedUser.Username != reqUser {
-			c.AbortWithStatus(http.StatusForbidden)
-			return
-		}
-	}
 }

@@ -11,5 +11,5 @@ var (
 
 // Auth errors
 var (
-	ErrInvalidKey = errors.New("invalid api key")
+	ErrInvalidKey = errors.New("auth: invalid api key")
 )

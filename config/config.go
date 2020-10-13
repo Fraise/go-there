@@ -9,7 +9,7 @@ import (
 
 var conf *Configuration
 
-// Configuration contains all the information needed to run the application
+// Configuration contains all the information needed to run the application.
 type Configuration struct {
 	Server    Server
 	Cache     Cache
@@ -17,13 +17,14 @@ type Configuration struct {
 	Endpoints map[string]Endpoint
 }
 
+// Endpoint represents the configuration of each endpoint group.
 type Endpoint struct {
 	Enabled   bool
 	NeedAuth  bool
 	NeedAdmin bool
 }
 
-// Server reoresents the server configuration.
+// Server represents the server configuration.
 type Server struct {
 	ListenAddress string
 	ListenPort    int
