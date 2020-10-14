@@ -35,8 +35,8 @@ func GetHashFromPassword(password string) ([]byte, []byte, error) {
 	return hash, hashArr[3][:22], nil
 }
 
-// GenerateRandomB64String creates a random base64 encoded string from using the crypto/rand package from a byte array
-// of length n. If less than n random bytes are generated, an error is returned.
+// GenerateRandomB64String creates a random base64 URL encoded string from using the crypto/rand package from a byte
+// array of length n. If less than n random bytes are generated, an error is returned.
 func GenerateRandomB64String(n int) (string, error) {
 	b := make([]byte, n)
 
