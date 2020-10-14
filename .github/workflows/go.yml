@@ -4,7 +4,6 @@ on:
   push:
     branches: 
       - master
-      - release/*
   pull_request:
     branches: 
       - master
@@ -34,8 +33,8 @@ jobs:
             dep ensure
         fi
 
-    - name: Build
-      run: make build
-
     - name: Test
       run: make test
+
+    - name: Build
+      run: make build
