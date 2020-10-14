@@ -22,7 +22,7 @@ func Init(conf *config.Configuration, e *gin.Engine, ds DataSourcer) {
 
 		goPath.GET("/:path", getPathHandler(ds))
 
-		if conf.Endpoints["go"].NeedAuth {
+		if conf.Endpoints["go"].Auth {
 			goPath.Use(auth.GetAuthMiddleware(ds))
 		}
 	}

@@ -11,18 +11,18 @@ import (
 	"testing"
 )
 
-type MockDataSourcer struct {
+type mockDataSourcer struct {
 }
 
-func (MockDataSourcer) SelectUserLogin(username string) (data.User, error) {
+func (mockDataSourcer) SelectUserLogin(username string) (data.User, error) {
 	return data.User{}, nil
 }
 
-func (MockDataSourcer) SelectUserLoginByApiKeySalt(apiKeySalt string) (data.User, error) {
+func (mockDataSourcer) SelectUserLoginByApiKeySalt(apiKeySalt string) (data.User, error) {
 	return data.User{}, nil
 }
 
-func (MockDataSourcer) GetTarget(path string) (string, error) {
+func (mockDataSourcer) GetTarget(path string) (string, error) {
 	switch path {
 	case "valid_path":
 		return "http://www.example.com", nil
@@ -108,7 +108,7 @@ func Test_getPathHandler(t *testing.T) {
 
 	_, e := gin.CreateTestContext(httptest.NewRecorder())
 
-	Init(conf, e, MockDataSourcer{})
+	Init(conf, e, mockDataSourcer{})
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

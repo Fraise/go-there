@@ -7,8 +7,6 @@ import (
 	"path/filepath"
 )
 
-var conf *Configuration
-
 // Configuration contains all the information needed to run the application.
 type Configuration struct {
 	Server    Server
@@ -20,8 +18,8 @@ type Configuration struct {
 // Endpoint represents the configuration of each endpoint group.
 type Endpoint struct {
 	Enabled   bool
-	NeedAuth  bool
-	NeedAdmin bool
+	Auth      bool
+	AdminOnly bool
 }
 
 // Server represents the server configuration.
@@ -53,9 +51,9 @@ type Database struct {
 // Init initialize the Configuration global variable, then tries to parse the provided configuration file. If an empty path is
 // provided, it tries to read go-there.conf in the binary directory.
 func Init(path string) (*Configuration, error) {
-	conf = new(Configuration)
+	conf, err := parseConfig(path)
 
-	if err := parseConfig(path); err != nil {
+	if err != nil {
 		return nil, err
 	}
 
@@ -65,7 +63,7 @@ func Init(path string) (*Configuration, error) {
 // parseConfig parse a configuration file in toml format and unmarshals it into the conf global var. If an empty path is
 // provided, it tries to read go-there.conf in the binary directory. It returns an error if it cannot read or unmarshal
 // the configuration.
-func parseConfig(path string) error {
+func parseConfig(path string) (*Configuration, error) {
 	// If no path is provided, search in the current directory
 	if path == "" {
 		path = filepath.Dir(os.Args[0]) + "/go-there.conf"
@@ -74,14 +72,16 @@ func parseConfig(path string) error {
 	content, err := ioutil.ReadFile(path)
 
 	if err != nil {
-		return err
+		return nil, err
 	}
+
+	conf := new(Configuration)
 
 	err = toml.Unmarshal(content, conf)
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return conf, nil
 }

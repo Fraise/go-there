@@ -25,7 +25,7 @@ type CreatePath struct {
 
 // DeletePath represents the data sent by the user to delete an existing redirection path.
 type DeletePath struct {
-	Path string `json:"path"`
+	Path string `json:"path" binding:"required"`
 }
 
 // Login represents the information given by a user to authenticate. It should be used to unmarshal incoming
