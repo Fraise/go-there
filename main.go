@@ -10,6 +10,7 @@ import (
 	"go-there/config"
 	"go-there/datasource"
 	"go-there/gopath"
+	"go-there/health"
 	"net/http"
 	"os"
 	"os/signal"
@@ -40,6 +41,7 @@ func main() {
 		log.Fatal().Err(err).Send()
 	}
 
+	health.Init(conf, e)
 	gopath.Init(conf, e, ds)
 	api.Init(conf, e, ds)
 

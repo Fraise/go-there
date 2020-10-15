@@ -8,3 +8,6 @@ build-static:
 
 test:
 	go test -v -tags=jsoniter ./...
+
+integration-test:
+	bash .test/run.sh
