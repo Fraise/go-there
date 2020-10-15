@@ -188,3 +188,73 @@ func TestGetRequestedUser(t *testing.T) {
 		})
 	}
 }
+
+func TestGetLoggedUser(t *testing.T) {
+	type args struct {
+		c *gin.Context
+	}
+	tests := []struct {
+		name string
+		args args
+		want data.User
+	}{
+		{
+			name: "ok",
+			args: args{
+				c: func() *gin.Context {
+					c, _ := gin.CreateTestContext(nil)
+
+					c.Keys = make(map[string]interface{})
+					c.Keys["user"] = data.User{
+						Username:     "user1",
+						IsAdmin:      false,
+						PasswordHash: []byte("$qwerty.asdfgh"),
+						ApiKeySalt:   []byte("asdfgh"),
+						ApiKeyHash:   []byte("$asdfgh.qwerty"),
+					}
+
+					return c
+				}(),
+			},
+			want: data.User{
+				Username:     "user1",
+				IsAdmin:      false,
+				PasswordHash: []byte("$qwerty.asdfgh"),
+				ApiKeySalt:   []byte("asdfgh"),
+				ApiKeyHash:   []byte("$asdfgh.qwerty"),
+			},
+		},
+		{
+			name: "nil_map",
+			args: args{
+				c: func() *gin.Context {
+					c, _ := gin.CreateTestContext(nil)
+
+					return c
+				}(),
+			},
+			want: data.User{},
+		},
+		{
+			name: "bad_type",
+			args: args{
+				c: func() *gin.Context {
+					c, _ := gin.CreateTestContext(nil)
+
+					c.Keys = make(map[string]interface{})
+					c.Keys["reqUser"] = "user1"
+
+					return c
+				}(),
+			},
+			want: data.User{},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := GetLoggedUser(tt.args.c)
+
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
