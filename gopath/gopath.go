@@ -20,10 +20,10 @@ func Init(conf *config.Configuration, e *gin.Engine, ds DataSourcer) {
 	if ep.Enabled {
 		goPath := e.Group("/go")
 
-		goPath.GET("/:path", getPathHandler(ds))
-
 		if conf.Endpoints["go"].Auth {
 			goPath.Use(auth.GetAuthMiddleware(ds))
 		}
+
+		goPath.GET("/:path", getPathHandler(ds))
 	}
 }

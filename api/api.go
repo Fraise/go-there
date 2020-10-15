@@ -28,27 +28,29 @@ func Init(conf *config.Configuration, e *gin.Engine, ds DataSourcer) {
 		// Init /api/users/:user routes
 		api := e.Group("/api")
 
-		api.GET("/users/:user", getUserHandler(ds))
-		api.DELETE("/users/:user", getDeleteUserHandler(ds))
-		api.PATCH("/users/:user", getUpdateUserHandler(ds))
-
 		if ep.Auth {
 			api.Use(auth.GetAuthMiddleware(ds))
 		}
 
 		api.Use(auth.GetPermissionsMiddleware(ep.AdminOnly))
+
+		api.GET("/users/:user", getUserHandler(ds))
+		api.DELETE("/users/:user", getDeleteUserHandler(ds))
+		api.PATCH("/users/:user", getUpdateUserHandler(ds))
 	}
 
 	ep = conf.Endpoints["create_users"]
 	if ep.Enabled {
 		// Init /api/users route
-		userRoute := e.POST("/api/users", getCreateHandler(ds))
+		userRoute := e.Group("/api/users")
 
 		if ep.Auth {
 			userRoute.Use(auth.GetAuthMiddleware(ds))
 		}
 
 		userRoute.Use(auth.GetPermissionsMiddleware(ep.AdminOnly))
+
+		userRoute.POST("/api/users", getCreateHandler(ds))
 	}
 
 	ep = conf.Endpoints["manage_paths"]
@@ -56,13 +58,13 @@ func Init(conf *config.Configuration, e *gin.Engine, ds DataSourcer) {
 		// Init /api/path route
 		path := e.Group("/api/path")
 
-		path.POST("", getPostPathHandler(ds))
-		path.DELETE("", getDeletePathHandler(ds))
-
 		if ep.Auth {
 			path.Use(auth.GetAuthMiddleware(ds))
 		}
 
 		path.Use(auth.GetPermissionsMiddleware(ep.AdminOnly))
+
+		path.POST("", getPostPathHandler(ds))
+		path.DELETE("", getDeletePathHandler(ds))
 	}
 }
