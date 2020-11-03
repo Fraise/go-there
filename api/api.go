@@ -50,7 +50,7 @@ func Init(conf *config.Configuration, e *gin.Engine, ds DataSourcer) {
 
 		userRoute.Use(auth.GetPermissionsMiddleware(ep.AdminOnly))
 
-		userRoute.POST("/api/users", getCreateHandler(ds))
+		userRoute.POST("", getCreateHandler(ds))
 	}
 
 	ep = conf.Endpoints["manage_paths"]
