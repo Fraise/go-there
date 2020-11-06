@@ -8,9 +8,9 @@ import (
 	"net/http"
 )
 
-// GetAuthMiddleware returns a gin middleware used for authentication. This middleware first tries bind the available
-// data contained either in the body or as parameters into a data.Login struct, then tries to authenticate the user
-// with an api key or an user/password if no key is provided.
+// GetAuthMiddleware returns a gin middleware used for authentication. This middleware first tries to bind either a
+// X-Api-Key header in a data.HeaderLogin struct or the data contained either in the body or as parameters into a
+// data.Login struct. It then tries to authenticate the user with an api key or an user/password if no key is provided.
 func GetAuthMiddleware(ds DataSourcer) func(c *gin.Context) {
 	return func(c *gin.Context) {
 		var l data.Login

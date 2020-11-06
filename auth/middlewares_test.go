@@ -65,7 +65,7 @@ func TestGetAuthMiddleware(t *testing.T) {
 		c.Status(http.StatusOK)
 	})
 
-	//TODO put it in the corerct order
+	//TODO add real test cases
 	e.Use(GetAuthMiddleware(mockDataSourcer{}))
 
 	for _, tt := range tests {
