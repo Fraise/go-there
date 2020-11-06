@@ -36,6 +36,12 @@ type Login struct {
 	ApiKey   string `form:"api_key" json:"api_key"`
 }
 
+// HeaderLogin represents the information given by a user in the header to authenticate. It should be used to unmarshal
+// incoming authentication data.
+type HeaderLogin struct {
+	XApiKey string `header:"X-Api-Key"`
+}
+
 // CreateUser represents the information given by a user to create another user. It should be used to unmarshal incoming
 // creation data.
 type CreateUser struct {

@@ -14,10 +14,25 @@ import (
 func GetAuthMiddleware(ds DataSourcer) func(c *gin.Context) {
 	return func(c *gin.Context) {
 		var l data.Login
-		if err := c.ShouldBind(&l); err != nil {
+		var hl data.HeaderLogin
+
+		// Tries to bind authentication header first
+		if err := c.ShouldBindHeader(&hl); err != nil {
 			c.AbortWithStatus(http.StatusBadRequest)
-			log.Info().Err(err).Msg("logging failed")
+			log.Info().Err(err).Msg("header binding failed")
 			return
+		}
+
+		if hl.XApiKey != "" {
+			// If the header contains an API key, do not bind the other fields
+			l.ApiKey = hl.XApiKey
+		} else {
+			// Tries to bind the data depending on the content type, then tries to bind the form data
+			if err := c.ShouldBind(&l); err != nil {
+				c.AbortWithStatus(http.StatusBadRequest)
+				log.Info().Err(err).Msg("content or form binding failed")
+				return
+			}
 		}
 
 		c.Keys = make(map[string]interface{})
@@ -80,7 +95,7 @@ func GetAuthMiddleware(ds DataSourcer) func(c *gin.Context) {
 	}
 }
 
-// GetPermissionsMiddleware verify that the logged used has the permission to access the requested ressource. A user
+// GetPermissionsMiddleware verify that the logged used has the permission to access the requested resource. A user
 // can only access his profile, and admin can access any profile.
 func GetPermissionsMiddleware(adminOnly bool) func(c *gin.Context) {
 	return func(c *gin.Context) {
