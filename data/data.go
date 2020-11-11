@@ -10,19 +10,22 @@ type User struct {
 	ApiKeyHash   []byte `db:"api_key_hash" json:"api_key_hash,omitempty"`
 }
 
+// Path contains the informations representing a redirection target internally.
 type Path struct {
 	Path   string `db:"path" json:"path" binding:"required"`
 	Target string `db:"target" json:"target" binding:"required"`
 	User   string `db:"user"`
 }
 
+// CreatePath represents the data sent by the user to add a new redirection path.
 type CreatePath struct {
 	Path   string `json:"path" binding:"required"`
 	Target string `json:"target" binding:"required"`
 }
 
+// DeletePath represents the data sent by the user to delete an existing redirection path.
 type DeletePath struct {
-	Path string `json:"path"`
+	Path string `json:"path" binding:"required"`
 }
 
 // Login represents the information given by a user to authenticate. It should be used to unmarshal incoming
@@ -31,6 +34,12 @@ type Login struct {
 	Username string `form:"username" json:"username"`
 	Password string `form:"password" json:"password"`
 	ApiKey   string `form:"api_key" json:"api_key"`
+}
+
+// HeaderLogin represents the information given by a user in the header to authenticate. It should be used to unmarshal
+// incoming authentication data.
+type HeaderLogin struct {
+	XApiKey string `header:"X-Api-Key"`
 }
 
 // CreateUser represents the information given by a user to create another user. It should be used to unmarshal incoming

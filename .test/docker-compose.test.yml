@@ -1,0 +1,33 @@
+version: "3.4"
+services:
+  go-there:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./go-there.conf:/bin/go-there.conf
+    networks:
+      - go-there_testing
+  go-there-test:
+    build:
+      context: .
+      dockerfile: ./go-there-test/Dockerfile
+    networks:
+      - go-there_testing
+  mysql:
+    image: mysql:8
+    ports:
+      - '3306:3306'
+    volumes:
+      - ./db/go-there.sql:/docker-entrypoint-initdb.d/go-there.sql
+    environment:
+      MYSQL_ROOT_PASSWORD: superrootpassword
+      MYSQL_DATABASE: go_there_db
+      MYSQL_USER: my_user
+      MYSQL_PASSWORD: superpassword
+    networks:
+      - go-there_testing
+networks:
+  go-there_testing:

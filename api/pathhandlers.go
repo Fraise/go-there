@@ -30,10 +30,11 @@ func getPostPathHandler(ds DataSourcer) func(c *gin.Context) {
 
 		if err != nil {
 			if err == data.ErrSqlDuplicateRow {
-				c.AbortWithStatusJSON(http.StatusBadRequest, data.ErrorResponse{Error: "user already exists"})
+				c.AbortWithStatusJSON(http.StatusBadRequest, data.ErrorResponse{Error: "path already exists"})
 				return
 			} else {
 				c.AbortWithStatus(http.StatusInternalServerError)
+				return
 			}
 		}
 

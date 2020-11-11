@@ -7,6 +7,7 @@ import (
 	"net/http"
 )
 
+// getPathHandler returns the redirection handler. If no redirection exists, then http.StatusNotFound is returned.
 func getPathHandler(ds DataSourcer) func(c *gin.Context) {
 	return func(c *gin.Context) {
 		t, err := ds.GetTarget(c.Param("path"))

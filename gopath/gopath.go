@@ -7,26 +7,23 @@ import (
 	"go-there/data"
 )
 
+// DataSourcer represents the datasource.DataSource methods needed by the gopath package to access the data.
 type DataSourcer interface {
-	SelectUser(username string) (data.User, error)
 	SelectUserLogin(username string) (data.User, error)
-	SelectApiKeyHashByUser(username string) ([]byte, error)
 	SelectUserLoginByApiKeySalt(apiKeySalt string) (data.User, error)
-	SelectApiKeyHashBySalt(apiKeySalt string) ([]byte, error)
-	InsertUser(user data.User) error
-	DeleteUser(username string) error
 	GetTarget(path string) (string, error)
 }
 
+// Init initializes the redirect paths from the provided configuration and add them to the *gin.Engine.
 func Init(conf *config.Configuration, e *gin.Engine, ds DataSourcer) {
 	ep := conf.Endpoints["go"]
 	if ep.Enabled {
 		goPath := e.Group("/go")
 
-		goPath.GET("/:path", getPathHandler(ds))
-
-		if conf.Endpoints["go"].NeedAuth {
+		if conf.Endpoints["go"].Auth {
 			goPath.Use(auth.GetAuthMiddleware(ds))
 		}
+
+		goPath.GET("/:path", getPathHandler(ds))
 	}
 }

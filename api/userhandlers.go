@@ -30,14 +30,14 @@ func getCreateHandler(ds DataSourcer) func(c *gin.Context) {
 			return
 		}
 
-		apkiKey, err := auth.GenerateRandomB64String(16)
+		apiKey, err := auth.GenerateRandomB64String(16)
 
 		if err != nil {
 			c.AbortWithStatus(http.StatusInternalServerError)
 			return
 		}
 
-		apiKeyHash, apiKeySalt, err := auth.GetHashFromPassword(apkiKey)
+		apiKeyHash, apiKeySalt, err := auth.GetHashFromPassword(apiKey)
 
 		if err != nil {
 			c.AbortWithStatus(http.StatusInternalServerError)
@@ -68,7 +68,7 @@ func getCreateHandler(ds DataSourcer) func(c *gin.Context) {
 		c.JSON(
 			http.StatusOK,
 			data.ApiKeyResponse{
-				ApiKey: base64.URLEncoding.EncodeToString(apiKeySalt) + "." + apkiKey,
+				ApiKey: base64.URLEncoding.EncodeToString(apiKeySalt) + "." + apiKey,
 			})
 	}
 }
