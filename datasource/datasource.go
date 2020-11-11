@@ -167,7 +167,7 @@ func (ds *DataSource) GetTarget(path string) (string, error) {
 
 // InsertPath adds a data.Path to the database.
 func (ds *DataSource) InsertPath(path data.Path) error {
-	_, err := ds.db.NamedExec("INSERT INTO go (path,target,user,is_public) VALUES (:path,:target,:user,:is_public)", path)
+	_, err := ds.db.NamedExec("INSERT INTO go (path,target,user) VALUES (:path,:target,:user)", path)
 
 	if err != nil {
 		if e, ok := err.(*mysql.MySQLError); ok {

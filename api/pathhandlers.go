@@ -34,6 +34,7 @@ func getPostPathHandler(ds DataSourcer) func(c *gin.Context) {
 				return
 			} else {
 				c.AbortWithStatus(http.StatusInternalServerError)
+				return
 			}
 		}
 

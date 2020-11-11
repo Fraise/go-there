@@ -1,5 +1,7 @@
 #!/bin/bash
 
+docker-compose -f .test/docker-compose.test.yml down
+
 docker-compose -f .test/docker-compose.test.yml up -d mysql
 
 docker-compose -f .test/docker-compose.test.yml build go-there
