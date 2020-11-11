@@ -4,7 +4,7 @@ WORKDIR /root
 
 COPY . .
 
-RUN go get
+RUN go mod download
 
 RUN make test
 RUN make build-static

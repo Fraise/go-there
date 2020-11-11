@@ -4,16 +4,18 @@ services:
     build:
       context: ..
       dockerfile: Dockerfile
-      network: host
     ports:
       - "8080:8080"
     volumes:
       - ./go-there.conf:/bin/go-there.conf
+    networks:
+      - go-there_testing
   go-there-test:
     build:
       context: .
       dockerfile: ./go-there-test/Dockerfile
-      network: host
+    networks:
+      - go-there_testing
   mysql:
     image: mysql:8
     ports:
@@ -25,3 +27,7 @@ services:
       MYSQL_DATABASE: go_there_db
       MYSQL_USER: my_user
       MYSQL_PASSWORD: superpassword
+    networks:
+      - go-there_testing
+networks:
+  go-there_testing:

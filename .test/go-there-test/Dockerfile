@@ -4,6 +4,6 @@ WORKDIR /root
 
 COPY ./go-there-test/ .
 
-RUN go get
+RUN go mod download
 
-CMD CGO_ENABLED=0 go test ./...
+CMD CGO_ENABLED=0 go test -v ./...
