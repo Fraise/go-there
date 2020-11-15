@@ -2,6 +2,7 @@ package datasource
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"github.com/go-sql-driver/mysql"
 	_ "github.com/go-sql-driver/mysql"
@@ -42,37 +43,39 @@ func Init(config *config.Configuration) (*DataSource, error) {
 	return ds, nil
 }
 
-// SelectUser fetches an complete user by his username in the database.
+// SelectUser fetches an complete user by his username in the database. Returns a data.ErrSql if it fails.
 func (ds *DataSource) SelectUser(username string) (data.User, error) {
 	u := data.User{}
 	err := ds.db.Get(&u, ds.db.Rebind("SELECT * FROM users WHERE username=?"), username)
 
 	if err != nil {
-		return data.User{}, err
+		return data.User{}, fmt.Errorf("%w : %s", data.ErrSql, err)
 	}
 
 	return u, nil
 }
 
-// SelectUserLogin fetches the username,is_admin,password_hash as a user by his username in the database.
+// SelectUserLogin fetches the username,is_admin,password_hash as a user by his username in the database. Returns a
+// data.ErrSql if it fails.
 func (ds *DataSource) SelectUserLogin(username string) (data.User, error) {
 	u := data.User{}
 	err := ds.db.Get(&u, ds.db.Rebind("SELECT username,is_admin,password_hash FROM users WHERE username=?"), username)
 
 	if err != nil {
-		return data.User{}, err
+		return data.User{}, fmt.Errorf("%w : %s", data.ErrSql, err)
 	}
 
 	return u, nil
 }
 
-// SelectApiKeyHashByUser fetches a full API key hash from the database by a username.
+// SelectApiKeyHashByUser fetches a full API key hash from the database by a username. Returns a data.ErrSql if it
+// fails.
 func (ds *DataSource) SelectApiKeyHashByUser(username string) ([]byte, error) {
 	ak := make([]byte, 0)
 	err := ds.db.Get(&ak, ds.db.Rebind("SELECT api_key_hash FROM users WHERE username=?"), username)
 
 	if err != nil {
-		return []byte{}, err
+		return []byte{}, fmt.Errorf("%w : %s", data.ErrSql, err)
 	}
 
 	return ak, nil
@@ -84,19 +87,19 @@ func (ds *DataSource) SelectUserLoginByApiKeySalt(apiKeySalt string) (data.User,
 	err := ds.db.Get(&u, ds.db.Rebind("SELECT username,is_admin,api_key_hash FROM users WHERE api_key_salt=?"), apiKeySalt)
 
 	if err != nil {
-		return data.User{}, err
+		return data.User{}, fmt.Errorf("%w : %s", data.ErrSql, err)
 	}
 
 	return u, nil
 }
 
-// SelectApiKeyHashBySalt fetches the full API key hash by its salt.
+// SelectApiKeyHashBySalt fetches the full API key hash by its salt. Returns a data.ErrSql if it fails.
 func (ds *DataSource) SelectApiKeyHashBySalt(apiKeySalt string) ([]byte, error) {
 	ak := make([]byte, 0)
 	err := ds.db.Get(&ak, ds.db.Rebind("SELECT api_key_hash FROM users WHERE api_key_salt=?"), apiKeySalt)
 
 	if err != nil {
-		return []byte{}, err
+		return []byte{}, fmt.Errorf("%w : %s", data.ErrSql, err)
 	}
 
 	return ak, nil
@@ -123,49 +126,59 @@ func (ds *DataSource) InsertUser(user data.User) error {
 	return nil
 }
 
-// UpdatetUserPassword updates an user's password in the database.
+// UpdatetUserPassword updates an user's password in the database. Returns a data.ErrSql if it fails.
 func (ds *DataSource) UpdatetUserPassword(user data.User) error {
 	_, err := ds.db.NamedExec("UPDATE users SET password_hash=:password_hash WHERE username=:username", user)
 
-	return err
-}
-
-// UpdatetUserPassword updates an user's API key in the database.
-func (ds *DataSource) UpdatetUserApiKey(user data.User) error {
-	_, err := ds.db.NamedExec("UPDATE users SET api_key_hash=:api_key_hash,api_key_salt=:api_key_salt WHERE username=:username", user)
-
-	return err
-}
-
-// DeleteUser deletes a user in the database by his userame.
-func (ds *DataSource) DeleteUser(username string) error {
-	_, err := ds.db.Exec(ds.db.Rebind("DELETE FROM users WHERE username=?"), username)
-
 	if err != nil {
-		return err
+		return fmt.Errorf("%w : %s", data.ErrSql, err)
 	}
 
 	return nil
 }
 
-// GetTarget gets a target in the database from a path.
+// UpdatetUserPassword updates an user's API key in the database. Returns a data.ErrSql if it fails.
+func (ds *DataSource) UpdatetUserApiKey(user data.User) error {
+	_, err := ds.db.NamedExec("UPDATE users SET api_key_hash=:api_key_hash,api_key_salt=:api_key_salt WHERE username=:username", user)
+
+	if err != nil {
+		return fmt.Errorf("%w : %s", data.ErrSql, err)
+	}
+
+	return nil
+}
+
+// DeleteUser deletes a user in the database by his userame. Returns a data.ErrSql if it fails.
+func (ds *DataSource) DeleteUser(username string) error {
+	_, err := ds.db.Exec(ds.db.Rebind("DELETE FROM users WHERE username=?"), username)
+
+	if err != nil {
+		return fmt.Errorf("%w : %s", data.ErrSql, err)
+	}
+
+	return nil
+}
+
+// GetTarget gets a target in the database from a path. Returns a data.ErrSqlNoRow if the target doesn't exist or
+// data.ErrSql if it fails.
 func (ds *DataSource) GetTarget(path string) (string, error) {
 	t := ""
 	err := ds.db.Get(&t, ds.db.Rebind("SELECT target FROM go WHERE path=?"), path)
 
 	if err != nil {
-		switch err {
-		case sql.ErrNoRows:
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
 			return "", data.ErrSqlNoRow
 		default:
-			return "", err
+			return "", fmt.Errorf("%w : %s", data.ErrSql, err)
 		}
 	}
 
 	return t, nil
 }
 
-// InsertPath adds a data.Path to the database.
+// InsertPath adds a data.Path to the database. Returns a data.ErrSqlDuplicateRow if the path already exists or
+// data.ErrSql if it fails.
 func (ds *DataSource) InsertPath(path data.Path) error {
 	_, err := ds.db.NamedExec("INSERT INTO go (path,target,user) VALUES (:path,:target,:user)", path)
 
@@ -176,17 +189,20 @@ func (ds *DataSource) InsertPath(path data.Path) error {
 				return data.ErrSqlDuplicateRow
 			}
 		} else {
-			return data.ErrSql
+			return fmt.Errorf("%w : %s", data.ErrSql, err)
 		}
-
 	}
 
-	return err
+	return nil
 }
 
-// InsertPath deletes a data.Path in the database.
+// InsertPath deletes a data.Path in the database. Returns a data.ErrSql if it fails.
 func (ds *DataSource) DeletePath(path data.Path) error {
 	_, err := ds.db.NamedExec("DELETE FROM go WHERE path=:path", path)
 
-	return err
+	if err != nil {
+		return fmt.Errorf("%w : %s", data.ErrSql, err)
+	}
+
+	return nil
 }
