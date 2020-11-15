@@ -1,6 +1,7 @@
 package gopath
 
 import (
+	"errors"
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog/log"
 	"go-there/data"
@@ -13,8 +14,8 @@ func getPathHandler(ds DataSourcer) func(c *gin.Context) {
 		t, err := ds.GetTarget(c.Param("path"))
 
 		if err != nil {
-			switch err {
-			case data.ErrSqlNoRow:
+			switch {
+			case errors.Is(err, data.ErrSqlNoRow):
 				c.Status(http.StatusNotFound)
 				return
 			default:

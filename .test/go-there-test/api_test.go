@@ -44,6 +44,34 @@ func TestCreateUserAlice(t *testing.T) {
 	}
 }
 
+func TestCreateExistingUser(t *testing.T) {
+	type CreateUser struct {
+		CreateUser     string `json:"create_user"`
+		CreatePassword string `json:"create_password"`
+	}
+
+	cu := CreateUser{
+		CreateUser:     "alice",
+		CreatePassword: "superpassword",
+	}
+
+	e := httpexpect.New(t, "http://go-there:8080")
+
+	obj := e.POST("/api/users").WithJSON(cu).
+		Expect().Status(http.StatusBadRequest).JSON().Object()
+	errorMsg := obj.Value("error").Raw()
+
+	assert.NotEmpty(t, errorMsg)
+
+	switch errorMsg.(type) {
+	case string:
+		errorStr := errorMsg.(string)
+		assert.Equal(t, errorStr, "user already exists")
+	default:
+		assert.Fail(t, "wrong type")
+	}
+}
+
 func TestCreateRedirectAlice(t *testing.T) {
 	type CreatePath struct {
 		Path   string `json:"path"`

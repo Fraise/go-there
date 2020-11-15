@@ -1,6 +1,7 @@
 package api
 
 import (
+	"errors"
 	"github.com/gin-gonic/gin"
 	"go-there/auth"
 	"go-there/data"
@@ -29,7 +30,7 @@ func getPostPathHandler(ds DataSourcer) func(c *gin.Context) {
 		err = ds.InsertPath(p)
 
 		if err != nil {
-			if err == data.ErrSqlDuplicateRow {
+			if errors.Is(err, data.ErrSqlDuplicateRow) {
 				c.AbortWithStatusJSON(http.StatusBadRequest, data.ErrorResponse{Error: "path already exists"})
 				return
 			} else {
