@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/base64"
+	"errors"
 	"github.com/gin-gonic/gin"
 	"go-there/auth"
 	"go-there/data"
@@ -27,6 +28,7 @@ func getCreateHandler(ds DataSourcer) func(c *gin.Context) {
 
 		if err != nil {
 			c.AbortWithStatus(http.StatusInternalServerError)
+			_ = c.Error(err)
 			return
 		}
 
@@ -34,6 +36,7 @@ func getCreateHandler(ds DataSourcer) func(c *gin.Context) {
 
 		if err != nil {
 			c.AbortWithStatus(http.StatusInternalServerError)
+			_ = c.Error(err)
 			return
 		}
 
@@ -41,6 +44,7 @@ func getCreateHandler(ds DataSourcer) func(c *gin.Context) {
 
 		if err != nil {
 			c.AbortWithStatus(http.StatusInternalServerError)
+			_ = c.Error(err)
 			return
 		}
 
@@ -55,12 +59,14 @@ func getCreateHandler(ds DataSourcer) func(c *gin.Context) {
 		err = ds.InsertUser(u)
 
 		if err != nil {
-			if err == data.ErrSqlDuplicateRow {
+			switch {
+			case errors.Is(err, data.ErrSqlDuplicateRow):
 				// TODO handle duplicate salt
 				c.AbortWithStatusJSON(http.StatusBadRequest, data.ErrorResponse{Error: "user already exists"})
 				return
-			} else {
+			default:
 				c.AbortWithStatus(http.StatusInternalServerError)
+				_ = c.Error(err)
 				return
 			}
 		}
@@ -89,6 +95,7 @@ func getUserHandler(ds DataSourcer) func(c *gin.Context) {
 
 		if err != nil {
 			c.AbortWithStatus(http.StatusInternalServerError)
+			_ = c.Error(err)
 			return
 		}
 
@@ -113,6 +120,7 @@ func getDeleteUserHandler(ds DataSourcer) func(c *gin.Context) {
 
 		if err != nil {
 			c.AbortWithStatus(http.StatusInternalServerError)
+			_ = c.Error(err)
 			return
 		}
 
@@ -150,6 +158,7 @@ func getUpdateUserHandler(ds DataSourcer) func(c *gin.Context) {
 
 			if err != nil {
 				c.AbortWithStatus(http.StatusInternalServerError)
+				_ = c.Error(err)
 				return
 			}
 
@@ -159,6 +168,7 @@ func getUpdateUserHandler(ds DataSourcer) func(c *gin.Context) {
 
 			if err != nil {
 				c.AbortWithStatus(http.StatusInternalServerError)
+				_ = c.Error(err)
 				return
 			}
 		}
@@ -168,6 +178,7 @@ func getUpdateUserHandler(ds DataSourcer) func(c *gin.Context) {
 
 			if err != nil {
 				c.AbortWithStatus(http.StatusInternalServerError)
+				_ = c.Error(err)
 				return
 			}
 
@@ -175,6 +186,7 @@ func getUpdateUserHandler(ds DataSourcer) func(c *gin.Context) {
 
 			if err != nil {
 				c.AbortWithStatus(http.StatusInternalServerError)
+				_ = c.Error(err)
 				return
 			}
 
@@ -185,6 +197,7 @@ func getUpdateUserHandler(ds DataSourcer) func(c *gin.Context) {
 
 			if err != nil {
 				c.AbortWithStatus(http.StatusInternalServerError)
+				_ = c.Error(err)
 				return
 			}
 

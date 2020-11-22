@@ -119,7 +119,7 @@ func (ds *DataSource) InsertUser(user data.User) error {
 				return data.ErrSqlDuplicateRow
 			}
 		} else {
-			return data.ErrSql
+			return fmt.Errorf("%w : %s", data.ErrSql, err)
 		}
 	}
 

@@ -11,6 +11,7 @@ import (
 	"go-there/datasource"
 	"go-there/gopath"
 	"go-there/health"
+	"go-there/logging"
 	"net/http"
 	"os"
 	"os/signal"
@@ -21,13 +22,26 @@ func main() {
 	var configPath = flag.String("config", "", "Path to the configuration file")
 	flag.Parse()
 
+	// Basic logging for the initialization
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
-	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
+	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stdout})
 
 	conf, err := config.Init(*configPath)
 
 	if err != nil {
 		log.Fatal().Err(err).Send()
+	}
+
+	logFile, err := logging.Init(conf)
+
+	if err != nil {
+		log.Fatal().Err(err).Send()
+	}
+
+	if logFile != nil {
+		defer func() {
+			_ = logFile.Close()
+		}()
 	}
 
 	e := gin.New()

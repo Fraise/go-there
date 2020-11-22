@@ -2,7 +2,6 @@ package auth
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/rs/zerolog/log"
 	"go-there/data"
 	"golang.org/x/crypto/bcrypt"
 	"net/http"
@@ -19,7 +18,6 @@ func GetAuthMiddleware(ds DataSourcer) func(c *gin.Context) {
 		// Tries to bind authentication header first
 		if err := c.ShouldBindHeader(&hl); err != nil {
 			c.AbortWithStatus(http.StatusBadRequest)
-			log.Info().Err(err).Msg("header binding failed")
 			return
 		}
 
@@ -30,14 +28,13 @@ func GetAuthMiddleware(ds DataSourcer) func(c *gin.Context) {
 			// Tries to bind the data depending on the content type, then tries to bind the form data
 			if err := c.ShouldBind(&l); err != nil {
 				c.AbortWithStatus(http.StatusBadRequest)
-				log.Info().Err(err).Msg("content or form binding failed")
 				return
 			}
 		}
 
 		c.Keys = make(map[string]interface{})
 
-		c.Keys["logInfo"] = l
+		c.Keys["logUser"] = l.Username
 
 		if l.ApiKey != "" {
 			// If we receive an api key
@@ -45,7 +42,6 @@ func GetAuthMiddleware(ds DataSourcer) func(c *gin.Context) {
 
 			if err != nil {
 				c.AbortWithStatus(http.StatusBadRequest)
-				log.Info().Err(err).Msg("authentication failed")
 				return
 			}
 
@@ -53,7 +49,7 @@ func GetAuthMiddleware(ds DataSourcer) func(c *gin.Context) {
 
 			if err != nil {
 				c.AbortWithStatus(http.StatusInternalServerError)
-				log.Error().Err(err).Msg("database error")
+				_ = c.Error(err)
 				return
 			}
 
@@ -61,12 +57,12 @@ func GetAuthMiddleware(ds DataSourcer) func(c *gin.Context) {
 
 			if err != nil {
 				c.AbortWithStatus(http.StatusUnauthorized)
-				log.Info().Err(err).Msg("authentication failed")
 				return
 			}
 
 			// Keep track of the user if he successfully authenticated
 			c.Keys["user"] = u
+			c.Keys["logUser"] = u.Username
 			// Keep track of which user data we want to access
 			c.Keys["reqUser"] = c.Param("user")
 		} else if l.Username != "" {
@@ -75,7 +71,7 @@ func GetAuthMiddleware(ds DataSourcer) func(c *gin.Context) {
 
 			if err != nil {
 				c.AbortWithStatus(http.StatusInternalServerError)
-				log.Error().Err(err).Msg("database error")
+				_ = c.Error(err)
 				return
 			}
 
@@ -83,12 +79,12 @@ func GetAuthMiddleware(ds DataSourcer) func(c *gin.Context) {
 
 			if err != nil {
 				c.AbortWithStatus(http.StatusUnauthorized)
-				log.Info().Err(err).Msg("authentication failed")
 				return
 			}
 
 			// Keep track of the user if he successfully authenticated
 			c.Keys["user"] = u
+			c.Keys["logUser"] = u.Username
 			// Keep track of which user data we want to access
 			c.Keys["reqUser"] = c.Param("user")
 		} else {

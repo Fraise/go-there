@@ -6,7 +6,7 @@ import (
 	"go-there/data"
 )
 
-// GetLoggingMiddleware returns a logging middleware which first parse the user info, call Next() then logs the request
+// GetLoggingMiddleware returns a logging middleware which first parse the user info, call Next() then logs the request.
 func GetLoggingMiddleware() func(c *gin.Context) {
 	return func(c *gin.Context) {
 		logInfo := data.LogInfo{
@@ -17,20 +17,33 @@ func GetLoggingMiddleware() func(c *gin.Context) {
 
 		c.Next()
 
-		li, ok := c.Keys["logInfo"]
+		li, ok := c.Keys["logUser"]
 
 		if ok {
-			logInfo.Login = li.(data.Login)
+			logInfo.User = li.(string)
 		}
 
 		logInfo.HttpCode = c.Writer.Status()
 
-		log.Info().
-			Str("method", logInfo.Method).
-			Int("http_code", logInfo.HttpCode).
-			Str("endpoint", logInfo.Endpoint).
-			Str("ip", logInfo.Ip).
-			Interface("login", logInfo.Login).
-			Msg("")
+		ginErr := c.Errors.Last()
+
+		if ginErr != nil {
+			log.Info().
+				Str("method", logInfo.Method).
+				Int("http_code", logInfo.HttpCode).
+				Str("endpoint", logInfo.Endpoint).
+				Str("ip", logInfo.Ip).
+				Str("user", logInfo.User).
+				Err(ginErr.Err).
+				Send()
+		} else {
+			log.Info().
+				Str("method", logInfo.Method).
+				Int("http_code", logInfo.HttpCode).
+				Str("endpoint", logInfo.Endpoint).
+				Str("ip", logInfo.Ip).
+				Str("user", logInfo.User).
+				Send()
+		}
 	}
 }

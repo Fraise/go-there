@@ -30,11 +30,13 @@ func getPostPathHandler(ds DataSourcer) func(c *gin.Context) {
 		err = ds.InsertPath(p)
 
 		if err != nil {
-			if errors.Is(err, data.ErrSqlDuplicateRow) {
+			switch {
+			case errors.Is(err, data.ErrSqlDuplicateRow):
 				c.AbortWithStatusJSON(http.StatusBadRequest, data.ErrorResponse{Error: "path already exists"})
 				return
-			} else {
+			default:
 				c.AbortWithStatus(http.StatusInternalServerError)
+				_ = c.Error(err)
 				return
 			}
 		}
@@ -65,6 +67,7 @@ func getDeletePathHandler(ds DataSourcer) func(c *gin.Context) {
 
 		if err != nil {
 			c.AbortWithStatus(http.StatusInternalServerError)
+			_ = c.Error(err)
 		}
 
 		c.Status(http.StatusOK)

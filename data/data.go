@@ -69,7 +69,7 @@ type ErrorResponse struct {
 type LogInfo struct {
 	Method   string `json:"method"`
 	Endpoint string `json:"endpoint"`
-	Login    Login  `json:"login"`
+	User     string `json:"user"`
 	Ip       string `json:"ip"`
 	HttpCode int    `json:"http_code"`
 }

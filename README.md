@@ -67,7 +67,7 @@ The configuration uses the toml format.
 All endpoints can be configured using the array of values :
 
 ```toml
-endpoint={ Enabled=true, Auth=false, AdminOnly=false }
+endpoint={ Enabled=true, Auth=false, AdminOnly=false, Log=true }
 ```
 
 The available configuration groups are :
@@ -113,3 +113,14 @@ Currently, the supported database type is mysql. In the future, postgresql and s
 `User` The user to identify as for the connection
 
 `Password` The password of the connection user
+
+### [Logs]
+
+The logs should be enabled on an endpoint basis as described in the *[Endpoints]* section. The available options common
+to every endpoint are :
+
+`File` The file where the logs will be appended. The `$stdout` and `$stderr` string will respectively output the logs in
+the OS' stdout or stderr. If left empty, it will output to stdout
+
+`AsJSON` Format the logs as a JSON string. If it is set to false, the logs will be formatted and colored for the 
+console, so they will be difficult to parse in a file
