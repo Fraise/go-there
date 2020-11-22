@@ -37,6 +37,8 @@ func GetAuthMiddleware(ds DataSourcer) func(c *gin.Context) {
 
 		c.Keys = make(map[string]interface{})
 
+		c.Keys["logInfo"] = l
+
 		if l.ApiKey != "" {
 			// If we receive an api key
 			salt, ak, err := validateApiKey(l.ApiKey)

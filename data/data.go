@@ -64,3 +64,12 @@ type ApiKeyResponse struct {
 type ErrorResponse struct {
 	Error string `json:"error"`
 }
+
+// LogInfo represents the data logged when a user makes a request
+type LogInfo struct {
+	Method   string `json:"method"`
+	Endpoint string `json:"endpoint"`
+	Login    Login  `json:"login"`
+	Ip       string `json:"ip"`
+	HttpCode int    `json:"http_code"`
+}

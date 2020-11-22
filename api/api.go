@@ -5,6 +5,7 @@ import (
 	"go-there/auth"
 	"go-there/config"
 	"go-there/data"
+	"go-there/logging"
 )
 
 // DataSourcer represents the datasource.DataSource methods needed by the api package to access the data.
@@ -28,6 +29,10 @@ func Init(conf *config.Configuration, e *gin.Engine, ds DataSourcer) {
 		// Init /api/users/:user routes
 		api := e.Group("/api")
 
+		if ep.Log {
+			api.Use(logging.GetLoggingMiddleware())
+		}
+
 		if ep.Auth {
 			api.Use(auth.GetAuthMiddleware(ds))
 		}
@@ -44,6 +49,10 @@ func Init(conf *config.Configuration, e *gin.Engine, ds DataSourcer) {
 		// Init /api/users route
 		userRoute := e.Group("/api/users")
 
+		if ep.Log {
+			userRoute.Use(logging.GetLoggingMiddleware())
+		}
+
 		if ep.Auth {
 			userRoute.Use(auth.GetAuthMiddleware(ds))
 		}
@@ -57,6 +66,10 @@ func Init(conf *config.Configuration, e *gin.Engine, ds DataSourcer) {
 	if ep.Enabled {
 		// Init /api/path route
 		path := e.Group("/api/path")
+
+		if ep.Log {
+			path.Use(logging.GetLoggingMiddleware())
+		}
 
 		if ep.Auth {
 			path.Use(auth.GetAuthMiddleware(ds))
