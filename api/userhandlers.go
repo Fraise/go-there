@@ -33,6 +33,7 @@ func getCreateHandler(ds DataSourcer) func(c *gin.Context) {
 			return
 		}
 
+		// Generate a random API key
 		apiKey, err := auth.GenerateRandomB64String(16)
 
 		if err != nil {
@@ -41,6 +42,7 @@ func getCreateHandler(ds DataSourcer) func(c *gin.Context) {
 			return
 		}
 
+		// Get its corresponding hash and salt
 		apiKeyHash, apiKeySalt, err := auth.GetHashFromPassword(apiKey)
 
 		if err != nil {
@@ -75,24 +77,15 @@ func getCreateHandler(ds DataSourcer) func(c *gin.Context) {
 		c.JSON(
 			http.StatusOK,
 			data.ApiKeyResponse{
-				ApiKey: base64.URLEncoding.EncodeToString(apiKeySalt) + "." + apiKey,
+				// TODO clean that up
+				ApiKey: base64.URLEncoding.EncodeToString(append(apiKeySalt, []byte(":"+apiKey)...)),
 			})
 	}
 }
 
 func getUserHandler(ds DataSourcer) func(c *gin.Context) {
 	return func(c *gin.Context) {
-		requestedUser := c.Param("user")
-
-		loggedUser := auth.GetLoggedUser(c)
-
-		// If an user is logged, make sure he can only see his data if he's not admin
-		if loggedUser.Username != "" && loggedUser.Username != requestedUser && !loggedUser.IsAdmin {
-			c.AbortWithStatus(http.StatusUnauthorized)
-			return
-		}
-
-		u, err := ds.SelectUser(requestedUser)
+		u, err := ds.SelectUser(c.Param("user"))
 
 		if err != nil {
 			c.AbortWithStatus(http.StatusInternalServerError)
@@ -107,17 +100,7 @@ func getUserHandler(ds DataSourcer) func(c *gin.Context) {
 
 func getDeleteUserHandler(ds DataSourcer) func(c *gin.Context) {
 	return func(c *gin.Context) {
-		requestedUser := c.Param("user")
-
-		loggedUser := auth.GetLoggedUser(c)
-
-		// If an user is logged, make sure he can only see his data if he's not admin
-		if loggedUser.Username != "" && loggedUser.Username != requestedUser && !loggedUser.IsAdmin {
-			c.AbortWithStatus(http.StatusUnauthorized)
-			return
-		}
-
-		err := ds.DeleteUser(requestedUser)
+		err := ds.DeleteUser(c.Param("user"))
 
 		if err != nil {
 			c.AbortWithStatus(http.StatusInternalServerError)
@@ -131,16 +114,6 @@ func getDeleteUserHandler(ds DataSourcer) func(c *gin.Context) {
 
 func getUpdateUserHandler(ds DataSourcer) func(c *gin.Context) {
 	return func(c *gin.Context) {
-		requestedUser := c.Param("user")
-
-		loggedUser := auth.GetLoggedUser(c)
-
-		// If an user is logged, make sure he can only see his data if he's not admin
-		if loggedUser.Username != "" && loggedUser.Username != requestedUser && !loggedUser.IsAdmin {
-			c.AbortWithStatus(http.StatusUnauthorized)
-			return
-		}
-
 		pu := data.PatchUser{}
 
 		err := c.ShouldBindBodyWith(&pu, binding.JSON)
@@ -150,7 +123,7 @@ func getUpdateUserHandler(ds DataSourcer) func(c *gin.Context) {
 			return
 		}
 
-		u := data.User{Username: requestedUser}
+		u := data.User{Username: c.Param("user")}
 		ar := data.ApiKeyResponse{}
 
 		if pu.PatchPassword != "" {

@@ -28,14 +28,14 @@ The API key can be provided either in JSON form in the request body:
 
 ```http request
 {
-  "api_key": "MEVEejdDZWR3TmFUaVNyaTRQdlJFdQ==.KaK8b3OwgOk6VW-MaXOwPA=="
+  "api_key": "bi44RkM4YWwueFE0d2RvTkF5akpJTzpPSC1rbkdMcm91VlA3N01pZkJ1Y0F3PT0="
 }
 ```
 
 or in a X-Api-Key header:
 
 ```http request
-X-Api-Key: MEVEejdDZWR3TmFUaVNyaTRQdlJFdQ==.KaK8b3OwgOk6VW-MaXOwPA==
+X-Api-Key: bi44RkM4YWwueFE0d2RvTkF5akpJTzpPSC1rbkdMcm91VlA3N01pZkJ1Y0F3PT0=
 ```
 
 If both authentication methods are used at the same time, only the API key will be checked.

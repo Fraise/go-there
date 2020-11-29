@@ -101,25 +101,21 @@ func GetPermissionsMiddleware(adminOnly bool) func(c *gin.Context) {
 	return func(c *gin.Context) {
 		loggedUser := GetLoggedUser(c)
 
+		// If the user is admin, always allow access
+		if loggedUser.IsAdmin {
+			return
+		}
+
 		// If admin rights are required
 		if adminOnly && !loggedUser.IsAdmin {
 			c.AbortWithStatus(http.StatusForbidden)
 			return
 		}
 
-		// If the user is admin, always allow access
-		if loggedUser.IsAdmin {
-			return
-		}
-
-		// If no login is required continue, as it is already validated by the auth middleware
-		if loggedUser.Username == "" {
-			return
-		}
-
 		// If an user is logged, make sure he can only see his data if he's not admin
 		reqUser := GetRequestedUser(c)
 
+		// If the resource "belong" to no one
 		if reqUser == "" {
 			return
 		}

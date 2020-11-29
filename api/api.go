@@ -35,9 +35,8 @@ func Init(conf *config.Configuration, e *gin.Engine, ds DataSourcer) {
 
 		if ep.Auth {
 			api.Use(auth.GetAuthMiddleware(ds))
+			api.Use(auth.GetPermissionsMiddleware(ep.AdminOnly))
 		}
-
-		api.Use(auth.GetPermissionsMiddleware(ep.AdminOnly))
 
 		api.GET("/users/:user", getUserHandler(ds))
 		api.DELETE("/users/:user", getDeleteUserHandler(ds))
@@ -55,9 +54,8 @@ func Init(conf *config.Configuration, e *gin.Engine, ds DataSourcer) {
 
 		if ep.Auth {
 			userRoute.Use(auth.GetAuthMiddleware(ds))
+			userRoute.Use(auth.GetPermissionsMiddleware(ep.AdminOnly))
 		}
-
-		userRoute.Use(auth.GetPermissionsMiddleware(ep.AdminOnly))
 
 		userRoute.POST("", getCreateHandler(ds))
 	}
@@ -73,9 +71,8 @@ func Init(conf *config.Configuration, e *gin.Engine, ds DataSourcer) {
 
 		if ep.Auth {
 			path.Use(auth.GetAuthMiddleware(ds))
+			path.Use(auth.GetPermissionsMiddleware(ep.AdminOnly))
 		}
-
-		path.Use(auth.GetPermissionsMiddleware(ep.AdminOnly))
 
 		path.POST("", getPostPathHandler(ds))
 		path.DELETE("", getDeletePathHandler(ds))

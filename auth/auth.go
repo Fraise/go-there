@@ -83,17 +83,17 @@ func GetRequestedUser(c *gin.Context) string {
 
 // validateApiKey takes an api key with the salt encoded in b64 and returns (salt, apikey, error).
 func validateApiKey(apiKey string) ([]byte, []byte, error) {
-	apiKeyArr := bytes.Split([]byte(apiKey), []byte("."))
-
-	if len(apiKeyArr) != 2 {
-		return nil, nil, data.ErrInvalidKey
-	}
-
-	decodedSalt, err := base64.URLEncoding.DecodeString(string(apiKeyArr[0]))
+	decodedKey, err := base64.URLEncoding.DecodeString(apiKey)
 
 	if err != nil {
 		return nil, nil, data.ErrInvalidKey
 	}
 
-	return decodedSalt, apiKeyArr[1], nil
+	apiKeyArr := bytes.Split(decodedKey, []byte(":"))
+
+	if len(apiKeyArr) != 2 {
+		return nil, nil, data.ErrInvalidKey
+	}
+
+	return apiKeyArr[0], apiKeyArr[1], nil
 }
