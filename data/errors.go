@@ -13,3 +13,8 @@ var (
 var (
 	ErrInvalidKey = errors.New("auth: invalid api key")
 )
+
+// Init errors
+var (
+	ErrInit = errors.New("init: failed")
+)

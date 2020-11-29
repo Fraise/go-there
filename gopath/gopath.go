@@ -5,6 +5,7 @@ import (
 	"go-there/auth"
 	"go-there/config"
 	"go-there/data"
+	"go-there/logging"
 )
 
 // DataSourcer represents the datasource.DataSource methods needed by the gopath package to access the data.
@@ -20,7 +21,11 @@ func Init(conf *config.Configuration, e *gin.Engine, ds DataSourcer) {
 	if ep.Enabled {
 		goPath := e.Group("/go")
 
-		if conf.Endpoints["go"].Auth {
+		if ep.Log {
+			goPath.Use(logging.GetLoggingMiddleware())
+		}
+
+		if ep.Auth {
 			goPath.Use(auth.GetAuthMiddleware(ds))
 		}
 

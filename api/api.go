@@ -5,6 +5,7 @@ import (
 	"go-there/auth"
 	"go-there/config"
 	"go-there/data"
+	"go-there/logging"
 )
 
 // DataSourcer represents the datasource.DataSource methods needed by the api package to access the data.
@@ -28,11 +29,14 @@ func Init(conf *config.Configuration, e *gin.Engine, ds DataSourcer) {
 		// Init /api/users/:user routes
 		api := e.Group("/api")
 
-		if ep.Auth {
-			api.Use(auth.GetAuthMiddleware(ds))
+		if ep.Log {
+			api.Use(logging.GetLoggingMiddleware())
 		}
 
-		api.Use(auth.GetPermissionsMiddleware(ep.AdminOnly))
+		if ep.Auth {
+			api.Use(auth.GetAuthMiddleware(ds))
+			api.Use(auth.GetPermissionsMiddleware(ep.AdminOnly))
+		}
 
 		api.GET("/users/:user", getUserHandler(ds))
 		api.DELETE("/users/:user", getDeleteUserHandler(ds))
@@ -44,11 +48,14 @@ func Init(conf *config.Configuration, e *gin.Engine, ds DataSourcer) {
 		// Init /api/users route
 		userRoute := e.Group("/api/users")
 
-		if ep.Auth {
-			userRoute.Use(auth.GetAuthMiddleware(ds))
+		if ep.Log {
+			userRoute.Use(logging.GetLoggingMiddleware())
 		}
 
-		userRoute.Use(auth.GetPermissionsMiddleware(ep.AdminOnly))
+		if ep.Auth {
+			userRoute.Use(auth.GetAuthMiddleware(ds))
+			userRoute.Use(auth.GetPermissionsMiddleware(ep.AdminOnly))
+		}
 
 		userRoute.POST("", getCreateHandler(ds))
 	}
@@ -58,11 +65,14 @@ func Init(conf *config.Configuration, e *gin.Engine, ds DataSourcer) {
 		// Init /api/path route
 		path := e.Group("/api/path")
 
-		if ep.Auth {
-			path.Use(auth.GetAuthMiddleware(ds))
+		if ep.Log {
+			path.Use(logging.GetLoggingMiddleware())
 		}
 
-		path.Use(auth.GetPermissionsMiddleware(ep.AdminOnly))
+		if ep.Auth {
+			path.Use(auth.GetAuthMiddleware(ds))
+			path.Use(auth.GetPermissionsMiddleware(ep.AdminOnly))
+		}
 
 		path.POST("", getPostPathHandler(ds))
 		path.DELETE("", getDeletePathHandler(ds))

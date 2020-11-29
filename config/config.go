@@ -13,6 +13,7 @@ type Configuration struct {
 	Cache     Cache
 	Database  Database
 	Endpoints map[string]Endpoint
+	Logs      Logs
 }
 
 // Endpoint represents the configuration of each endpoint group.
@@ -20,6 +21,7 @@ type Endpoint struct {
 	Enabled   bool
 	Auth      bool
 	AdminOnly bool
+	Log       bool
 }
 
 // Server represents the server configuration.
@@ -46,6 +48,12 @@ type Database struct {
 	Name     string
 	User     string
 	Password string
+}
+
+// Logs represents the logging configuration.
+type Logs struct {
+	File   string
+	AsJSON bool
 }
 
 // Init initialize the Configuration global variable, then tries to parse the provided configuration file. If an empty path is

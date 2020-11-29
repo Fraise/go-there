@@ -2,7 +2,7 @@ package auth
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/rs/zerolog/log"
+	"github.com/gin-gonic/gin/binding"
 	"go-there/data"
 	"golang.org/x/crypto/bcrypt"
 	"net/http"
@@ -19,23 +19,24 @@ func GetAuthMiddleware(ds DataSourcer) func(c *gin.Context) {
 		// Tries to bind authentication header first
 		if err := c.ShouldBindHeader(&hl); err != nil {
 			c.AbortWithStatus(http.StatusBadRequest)
-			log.Info().Err(err).Msg("header binding failed")
 			return
 		}
 
 		if hl.XApiKey != "" {
 			// If the header contains an API key, do not bind the other fields
 			l.ApiKey = hl.XApiKey
+			// The keys map is only initialized if a call to ShouldBindBody is made
+			c.Keys = make(map[string]interface{})
 		} else {
-			// Tries to bind the data depending on the content type, then tries to bind the form data
-			if err := c.ShouldBind(&l); err != nil {
+			// Tries to bind the JSON data related to login
+			// Implicitly initialize the c.Keys map
+			if err := c.ShouldBindBodyWith(&l, binding.JSON); err != nil {
 				c.AbortWithStatus(http.StatusBadRequest)
-				log.Info().Err(err).Msg("content or form binding failed")
 				return
 			}
 		}
 
-		c.Keys = make(map[string]interface{})
+		c.Keys["logUser"] = l.Username
 
 		if l.ApiKey != "" {
 			// If we receive an api key
@@ -43,7 +44,6 @@ func GetAuthMiddleware(ds DataSourcer) func(c *gin.Context) {
 
 			if err != nil {
 				c.AbortWithStatus(http.StatusBadRequest)
-				log.Info().Err(err).Msg("authentication failed")
 				return
 			}
 
@@ -51,7 +51,7 @@ func GetAuthMiddleware(ds DataSourcer) func(c *gin.Context) {
 
 			if err != nil {
 				c.AbortWithStatus(http.StatusInternalServerError)
-				log.Error().Err(err).Msg("database error")
+				_ = c.Error(err)
 				return
 			}
 
@@ -59,12 +59,12 @@ func GetAuthMiddleware(ds DataSourcer) func(c *gin.Context) {
 
 			if err != nil {
 				c.AbortWithStatus(http.StatusUnauthorized)
-				log.Info().Err(err).Msg("authentication failed")
 				return
 			}
 
 			// Keep track of the user if he successfully authenticated
 			c.Keys["user"] = u
+			c.Keys["logUser"] = u.Username
 			// Keep track of which user data we want to access
 			c.Keys["reqUser"] = c.Param("user")
 		} else if l.Username != "" {
@@ -73,7 +73,7 @@ func GetAuthMiddleware(ds DataSourcer) func(c *gin.Context) {
 
 			if err != nil {
 				c.AbortWithStatus(http.StatusInternalServerError)
-				log.Error().Err(err).Msg("database error")
+				_ = c.Error(err)
 				return
 			}
 
@@ -81,12 +81,12 @@ func GetAuthMiddleware(ds DataSourcer) func(c *gin.Context) {
 
 			if err != nil {
 				c.AbortWithStatus(http.StatusUnauthorized)
-				log.Info().Err(err).Msg("authentication failed")
 				return
 			}
 
 			// Keep track of the user if he successfully authenticated
 			c.Keys["user"] = u
+			c.Keys["logUser"] = u.Username
 			// Keep track of which user data we want to access
 			c.Keys["reqUser"] = c.Param("user")
 		} else {
@@ -101,25 +101,21 @@ func GetPermissionsMiddleware(adminOnly bool) func(c *gin.Context) {
 	return func(c *gin.Context) {
 		loggedUser := GetLoggedUser(c)
 
+		// If the user is admin, always allow access
+		if loggedUser.IsAdmin {
+			return
+		}
+
 		// If admin rights are required
 		if adminOnly && !loggedUser.IsAdmin {
 			c.AbortWithStatus(http.StatusForbidden)
 			return
 		}
 
-		// If the user is admin, always allow access
-		if loggedUser.IsAdmin {
-			return
-		}
-
-		// If no login is required continue, as it is already validated by the auth middleware
-		if loggedUser.Username == "" {
-			return
-		}
-
 		// If an user is logged, make sure he can only see his data if he's not admin
 		reqUser := GetRequestedUser(c)
 
+		// If the resource "belong" to no one
 		if reqUser == "" {
 			return
 		}

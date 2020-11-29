@@ -2,7 +2,9 @@ package api
 
 import (
 	"encoding/base64"
+	"errors"
 	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
 	"go-there/auth"
 	"go-there/data"
 	"net/http"
@@ -15,7 +17,7 @@ import (
 func getCreateHandler(ds DataSourcer) func(c *gin.Context) {
 	return func(c *gin.Context) {
 		cu := data.CreateUser{}
-		err := c.ShouldBindJSON(&cu)
+		err := c.ShouldBindBodyWith(&cu, binding.JSON)
 
 		if err != nil {
 			c.AbortWithStatus(http.StatusBadRequest)
@@ -27,20 +29,25 @@ func getCreateHandler(ds DataSourcer) func(c *gin.Context) {
 
 		if err != nil {
 			c.AbortWithStatus(http.StatusInternalServerError)
+			_ = c.Error(err)
 			return
 		}
 
+		// Generate a random API key
 		apiKey, err := auth.GenerateRandomB64String(16)
 
 		if err != nil {
 			c.AbortWithStatus(http.StatusInternalServerError)
+			_ = c.Error(err)
 			return
 		}
 
+		// Get its corresponding hash and salt
 		apiKeyHash, apiKeySalt, err := auth.GetHashFromPassword(apiKey)
 
 		if err != nil {
 			c.AbortWithStatus(http.StatusInternalServerError)
+			_ = c.Error(err)
 			return
 		}
 
@@ -55,12 +62,14 @@ func getCreateHandler(ds DataSourcer) func(c *gin.Context) {
 		err = ds.InsertUser(u)
 
 		if err != nil {
-			if err == data.ErrSqlDuplicateRow {
+			switch {
+			case errors.Is(err, data.ErrSqlDuplicateRow):
 				// TODO handle duplicate salt
 				c.AbortWithStatusJSON(http.StatusBadRequest, data.ErrorResponse{Error: "user already exists"})
 				return
-			} else {
+			default:
 				c.AbortWithStatus(http.StatusInternalServerError)
+				_ = c.Error(err)
 				return
 			}
 		}
@@ -68,27 +77,19 @@ func getCreateHandler(ds DataSourcer) func(c *gin.Context) {
 		c.JSON(
 			http.StatusOK,
 			data.ApiKeyResponse{
-				ApiKey: base64.URLEncoding.EncodeToString(apiKeySalt) + "." + apiKey,
+				// TODO clean that up
+				ApiKey: base64.URLEncoding.EncodeToString(append(apiKeySalt, []byte(":"+apiKey)...)),
 			})
 	}
 }
 
 func getUserHandler(ds DataSourcer) func(c *gin.Context) {
 	return func(c *gin.Context) {
-		requestedUser := c.Param("user")
-
-		loggedUser := auth.GetLoggedUser(c)
-
-		// If an user is logged, make sure he can only see his data if he's not admin
-		if loggedUser.Username != "" && loggedUser.Username != requestedUser && !loggedUser.IsAdmin {
-			c.AbortWithStatus(http.StatusUnauthorized)
-			return
-		}
-
-		u, err := ds.SelectUser(requestedUser)
+		u, err := ds.SelectUser(c.Param("user"))
 
 		if err != nil {
 			c.AbortWithStatus(http.StatusInternalServerError)
+			_ = c.Error(err)
 			return
 		}
 
@@ -99,20 +100,11 @@ func getUserHandler(ds DataSourcer) func(c *gin.Context) {
 
 func getDeleteUserHandler(ds DataSourcer) func(c *gin.Context) {
 	return func(c *gin.Context) {
-		requestedUser := c.Param("user")
-
-		loggedUser := auth.GetLoggedUser(c)
-
-		// If an user is logged, make sure he can only see his data if he's not admin
-		if loggedUser.Username != "" && loggedUser.Username != requestedUser && !loggedUser.IsAdmin {
-			c.AbortWithStatus(http.StatusUnauthorized)
-			return
-		}
-
-		err := ds.DeleteUser(requestedUser)
+		err := ds.DeleteUser(c.Param("user"))
 
 		if err != nil {
 			c.AbortWithStatus(http.StatusInternalServerError)
+			_ = c.Error(err)
 			return
 		}
 
@@ -122,26 +114,16 @@ func getDeleteUserHandler(ds DataSourcer) func(c *gin.Context) {
 
 func getUpdateUserHandler(ds DataSourcer) func(c *gin.Context) {
 	return func(c *gin.Context) {
-		requestedUser := c.Param("user")
-
-		loggedUser := auth.GetLoggedUser(c)
-
-		// If an user is logged, make sure he can only see his data if he's not admin
-		if loggedUser.Username != "" && loggedUser.Username != requestedUser && !loggedUser.IsAdmin {
-			c.AbortWithStatus(http.StatusUnauthorized)
-			return
-		}
-
 		pu := data.PatchUser{}
 
-		err := c.ShouldBindJSON(&pu)
+		err := c.ShouldBindBodyWith(&pu, binding.JSON)
 
 		if err != nil {
 			c.AbortWithStatus(http.StatusBadRequest)
 			return
 		}
 
-		u := data.User{Username: requestedUser}
+		u := data.User{Username: c.Param("user")}
 		ar := data.ApiKeyResponse{}
 
 		if pu.PatchPassword != "" {
@@ -150,6 +132,7 @@ func getUpdateUserHandler(ds DataSourcer) func(c *gin.Context) {
 
 			if err != nil {
 				c.AbortWithStatus(http.StatusInternalServerError)
+				_ = c.Error(err)
 				return
 			}
 
@@ -159,6 +142,7 @@ func getUpdateUserHandler(ds DataSourcer) func(c *gin.Context) {
 
 			if err != nil {
 				c.AbortWithStatus(http.StatusInternalServerError)
+				_ = c.Error(err)
 				return
 			}
 		}
@@ -168,6 +152,7 @@ func getUpdateUserHandler(ds DataSourcer) func(c *gin.Context) {
 
 			if err != nil {
 				c.AbortWithStatus(http.StatusInternalServerError)
+				_ = c.Error(err)
 				return
 			}
 
@@ -175,6 +160,7 @@ func getUpdateUserHandler(ds DataSourcer) func(c *gin.Context) {
 
 			if err != nil {
 				c.AbortWithStatus(http.StatusInternalServerError)
+				_ = c.Error(err)
 				return
 			}
 
@@ -185,6 +171,7 @@ func getUpdateUserHandler(ds DataSourcer) func(c *gin.Context) {
 
 			if err != nil {
 				c.AbortWithStatus(http.StatusInternalServerError)
+				_ = c.Error(err)
 				return
 			}
 

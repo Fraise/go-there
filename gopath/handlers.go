@@ -3,7 +3,6 @@ package gopath
 import (
 	"errors"
 	"github.com/gin-gonic/gin"
-	"github.com/rs/zerolog/log"
 	"go-there/data"
 	"net/http"
 )
@@ -20,7 +19,7 @@ func getPathHandler(ds DataSourcer) func(c *gin.Context) {
 				return
 			default:
 				c.AbortWithStatus(http.StatusInternalServerError)
-				log.Error().Err(err).Msg("database error")
+				_ = c.Error(err)
 				return
 			}
 		}

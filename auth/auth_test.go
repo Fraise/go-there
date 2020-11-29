@@ -95,7 +95,7 @@ func Test_validateApiKey(t *testing.T) {
 		{
 			name: "ok",
 			args: args{
-				apiKey: base64.URLEncoding.EncodeToString(apiKeySalt) + "." + apiKey,
+				apiKey: base64.URLEncoding.EncodeToString(append(apiKeySalt, []byte(":"+apiKey)...)),
 			},
 			want:    apiKeySalt,
 			want1:   []byte(apiKey),
@@ -104,7 +104,7 @@ func Test_validateApiKey(t *testing.T) {
 		{
 			name: "invalid",
 			args: args{
-				apiKey: "part1.part2.part3",
+				apiKey: "part1:part2:part3",
 			},
 			want:    nil,
 			want1:   nil,
@@ -113,7 +113,7 @@ func Test_validateApiKey(t *testing.T) {
 		{
 			name: "corrupt",
 			args: args{
-				apiKey: "\\" + base64.URLEncoding.EncodeToString(apiKeySalt)[1:] + "." + apiKey,
+				apiKey: "\\" + base64.URLEncoding.EncodeToString(append(apiKeySalt, []byte(":"+apiKey)...))[1:],
 			},
 			want:    nil,
 			want1:   nil,
