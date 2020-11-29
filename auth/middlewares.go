@@ -2,6 +2,7 @@ package auth
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
 	"go-there/data"
 	"golang.org/x/crypto/bcrypt"
 	"net/http"
@@ -24,15 +25,16 @@ func GetAuthMiddleware(ds DataSourcer) func(c *gin.Context) {
 		if hl.XApiKey != "" {
 			// If the header contains an API key, do not bind the other fields
 			l.ApiKey = hl.XApiKey
+			// The keys map is only initialized if a call to ShouldBindBody is made
+			c.Keys = make(map[string]interface{})
 		} else {
-			// Tries to bind the data depending on the content type, then tries to bind the form data
-			if err := c.ShouldBind(&l); err != nil {
+			// Tries to bind the JSON data related to login
+			// Implicitly initialize the c.Keys map
+			if err := c.ShouldBindBodyWith(&l, binding.JSON); err != nil {
 				c.AbortWithStatus(http.StatusBadRequest)
 				return
 			}
 		}
-
-		c.Keys = make(map[string]interface{})
 
 		c.Keys["logUser"] = l.Username
 

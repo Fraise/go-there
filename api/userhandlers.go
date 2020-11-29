@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
 	"go-there/auth"
 	"go-there/data"
 	"net/http"
@@ -16,7 +17,7 @@ import (
 func getCreateHandler(ds DataSourcer) func(c *gin.Context) {
 	return func(c *gin.Context) {
 		cu := data.CreateUser{}
-		err := c.ShouldBindJSON(&cu)
+		err := c.ShouldBindBodyWith(&cu, binding.JSON)
 
 		if err != nil {
 			c.AbortWithStatus(http.StatusBadRequest)
@@ -142,7 +143,7 @@ func getUpdateUserHandler(ds DataSourcer) func(c *gin.Context) {
 
 		pu := data.PatchUser{}
 
-		err := c.ShouldBindJSON(&pu)
+		err := c.ShouldBindBodyWith(&pu, binding.JSON)
 
 		if err != nil {
 			c.AbortWithStatus(http.StatusBadRequest)
