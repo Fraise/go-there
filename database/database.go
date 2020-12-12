@@ -71,7 +71,11 @@ func connect(config *config.Configuration, dbType string) (*DataBase, error) {
 		return nil, fmt.Errorf("%w : %s", data.ErrSql, "invalid sql type")
 	}
 
-	return ds, fmt.Errorf("%w : %s", data.ErrSql, err)
+	if err != nil {
+		return ds, fmt.Errorf("%w : %s", data.ErrSql, err)
+	}
+
+	return ds, nil
 }
 
 // SelectUser fetches an complete user by his username in the database. Returns a data.ErrSql if it fails.
