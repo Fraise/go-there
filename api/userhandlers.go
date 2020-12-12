@@ -24,7 +24,7 @@ func getCreateHandler(ds DataSourcer) func(c *gin.Context) {
 			return
 		}
 
-		// We don't need to store the salt for a password
+		// We don't need to store the salt section individually for a password
 		hash, _, err := auth.GetHashFromPassword(cu.CreatePassword)
 
 		if err != nil {

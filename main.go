@@ -8,7 +8,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"go-there/api"
 	"go-there/config"
-	"go-there/datasource"
+	"go-there/database"
 	"go-there/gopath"
 	"go-there/health"
 	"go-there/logging"
@@ -49,7 +49,7 @@ func main() {
 	e.Use(gin.Logger())
 	e.Use(gin.Recovery())
 
-	ds, err := datasource.Init(conf)
+	ds, err := database.Init(conf)
 
 	if err != nil {
 		log.Fatal().Err(err).Send()

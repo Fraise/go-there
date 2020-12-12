@@ -8,7 +8,7 @@ import (
 	"go-there/logging"
 )
 
-// DataSourcer represents the datasource.DataSource methods needed by the gopath package to access the data.
+// DataSourcer represents the database.DataSource methods needed by the gopath package to access the data.
 type DataSourcer interface {
 	SelectUserLogin(username string) (data.User, error)
 	SelectUserLoginByApiKeySalt(apiKeySalt string) (data.User, error)
