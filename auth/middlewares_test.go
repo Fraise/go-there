@@ -235,3 +235,245 @@ func TestGetAuthMiddleware(t *testing.T) {
 		})
 	}
 }
+
+func TestGetAPermissionsMiddleware(t *testing.T) {
+	type resp struct {
+		code int
+		body []byte
+	}
+
+	type args struct {
+		req           *http.Request
+		loggedUser    data.User
+		requestedUser string
+	}
+
+	tests := []struct {
+		name string
+		args args
+		want resp
+	}{
+		{
+			name: "ok",
+			args: args{
+				req: func() *http.Request {
+					req, _ := http.NewRequest("GET", "/ping", nil)
+
+					return req
+				}(),
+				loggedUser: data.User{
+					Username: "alice",
+					IsAdmin:  false,
+				},
+				requestedUser: "alice",
+			},
+			want: resp{
+				code: http.StatusOK,
+				body: nil,
+			},
+		},
+		{
+			name: "forbidden",
+			args: args{
+				req: func() *http.Request {
+					req, _ := http.NewRequest("GET", "/ping", nil)
+
+					return req
+				}(),
+				loggedUser: data.User{
+					Username: "alice",
+					IsAdmin:  false,
+				},
+				requestedUser: "bob",
+			},
+			want: resp{
+				code: http.StatusForbidden,
+				body: nil,
+			},
+		},
+		{
+			name: "admin",
+			args: args{
+				req: func() *http.Request {
+					req, _ := http.NewRequest("GET", "/ping", nil)
+
+					return req
+				}(),
+				loggedUser: data.User{
+					Username: "alice",
+					IsAdmin:  true,
+				},
+				requestedUser: "bob",
+			},
+			want: resp{
+				code: http.StatusOK,
+				body: nil,
+			},
+		},
+		{
+			name: "ok_own",
+			args: args{
+				req: func() *http.Request {
+					req, _ := http.NewRequest("GET", "/ping", nil)
+
+					return req
+				}(),
+				loggedUser: data.User{
+					Username: "alice",
+					IsAdmin:  false,
+				},
+				requestedUser: "",
+			},
+			want: resp{
+				code: http.StatusOK,
+				body: nil,
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, e := gin.CreateTestContext(httptest.NewRecorder())
+
+			e.Use(func(c *gin.Context) {
+				c.Keys = make(map[string]interface{})
+				c.Keys["user"] = tt.args.loggedUser
+				c.Keys["reqUser"] = tt.args.requestedUser
+			})
+
+			e.Use(GetPermissionsMiddleware(false))
+
+			e.GET("/ping", func(c *gin.Context) {
+				c.Status(http.StatusOK)
+			})
+
+			w := httptest.NewRecorder()
+
+			e.ServeHTTP(w, tt.args.req)
+
+			assert.Equal(t, tt.want.code, w.Code)
+			assert.Equal(t, tt.want.body, w.Body.Bytes())
+		})
+	}
+}
+
+func TestGetAPermissionsMiddlewareAdmin(t *testing.T) {
+	type resp struct {
+		code int
+		body []byte
+	}
+
+	type args struct {
+		req           *http.Request
+		loggedUser    data.User
+		requestedUser string
+	}
+
+	tests := []struct {
+		name string
+		args args
+		want resp
+	}{
+		{
+			name: "ok",
+			args: args{
+				req: func() *http.Request {
+					req, _ := http.NewRequest("GET", "/ping", nil)
+
+					return req
+				}(),
+				loggedUser: data.User{
+					Username: "alice",
+					IsAdmin:  false,
+				},
+				requestedUser: "alice",
+			},
+			want: resp{
+				code: http.StatusForbidden,
+				body: nil,
+			},
+		},
+		{
+			name: "forbidden",
+			args: args{
+				req: func() *http.Request {
+					req, _ := http.NewRequest("GET", "/ping", nil)
+
+					return req
+				}(),
+				loggedUser: data.User{
+					Username: "alice",
+					IsAdmin:  false,
+				},
+				requestedUser: "bob",
+			},
+			want: resp{
+				code: http.StatusForbidden,
+				body: nil,
+			},
+		},
+		{
+			name: "admin",
+			args: args{
+				req: func() *http.Request {
+					req, _ := http.NewRequest("GET", "/ping", nil)
+
+					return req
+				}(),
+				loggedUser: data.User{
+					Username: "alice",
+					IsAdmin:  true,
+				},
+				requestedUser: "bob",
+			},
+			want: resp{
+				code: http.StatusOK,
+				body: nil,
+			},
+		},
+		{
+			name: "ok_own",
+			args: args{
+				req: func() *http.Request {
+					req, _ := http.NewRequest("GET", "/ping", nil)
+
+					return req
+				}(),
+				loggedUser: data.User{
+					Username: "alice",
+					IsAdmin:  false,
+				},
+				requestedUser: "",
+			},
+			want: resp{
+				code: http.StatusForbidden,
+				body: nil,
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, e := gin.CreateTestContext(httptest.NewRecorder())
+
+			e.Use(func(c *gin.Context) {
+				c.Keys = make(map[string]interface{})
+				c.Keys["user"] = tt.args.loggedUser
+				c.Keys["reqUser"] = tt.args.requestedUser
+			})
+
+			e.Use(GetPermissionsMiddleware(true))
+
+			e.GET("/ping", func(c *gin.Context) {
+				c.Status(http.StatusOK)
+			})
+
+			w := httptest.NewRecorder()
+
+			e.ServeHTTP(w, tt.args.req)
+
+			assert.Equal(t, tt.want.code, w.Code)
+			assert.Equal(t, tt.want.body, w.Body.Bytes())
+		})
+	}
+}

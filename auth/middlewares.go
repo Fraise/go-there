@@ -123,7 +123,7 @@ func GetPermissionsMiddleware(adminOnly bool) func(c *gin.Context) {
 		// If an user is logged, make sure he can only see his data if he's not admin
 		reqUser := GetRequestedUser(c)
 
-		// If the resource "belong" to no one, in this case, the request always access the client's own resources
+		// If the resource "belong" to no one. In this case, the request always access the client's own resources
 		if reqUser == "" {
 			return
 		}
