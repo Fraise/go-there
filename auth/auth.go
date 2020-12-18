@@ -65,7 +65,7 @@ func GetLoggedUser(c *gin.Context) data.User {
 	return u
 }
 
-// GetRequestedUser returns the user corresponding to the ressource accessed. It returns "" if the ressource does not
+// GetRequestedUser returns the user corresponding to the resource accessed. It returns "" if the resource does not
 // belong to any user.
 func GetRequestedUser(c *gin.Context) string {
 	if c.Keys == nil {

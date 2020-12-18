@@ -13,6 +13,7 @@ func Test_parseConfig(t *testing.T) {
 	}
 
 	content := "[Server]\n" +
+		"Mode=\"debug\"\n" +
 		"ListenAddress=\"0.0.0.0\"\n" +
 		"ListenPort=8080\n" +
 		"\n" +
@@ -27,6 +28,8 @@ func Test_parseConfig(t *testing.T) {
 		"Type=\"\"\n" +
 		"Address=\"\"\n" +
 		"Port=0\n" +
+		"User=\"alice\"\n" +
+		"Password=\"superpassword\"\n" +
 		"\n" +
 		"[Database]\n" +
 		"Type=\"mysql\"\n" +
@@ -69,14 +72,17 @@ func Test_parseConfig(t *testing.T) {
 			},
 			want: &Configuration{
 				Server: Server{
+					Mode:          "debug",
 					ListenAddress: "0.0.0.0",
 					ListenPort:    8080,
 				},
 				Cache: Cache{
-					Enabled: false,
-					Type:    "",
-					Address: "",
-					Port:    0,
+					Enabled:  false,
+					Type:     "",
+					Address:  "",
+					Port:     0,
+					User:     "alice",
+					Password: "superpassword",
 				},
 				Database: Database{
 					Type:     "mysql",
@@ -122,6 +128,7 @@ func TestInit(t *testing.T) {
 	}
 
 	content := "[Server]\n" +
+		"Mode=\"debug\"\n" +
 		"ListenAddress=\"0.0.0.0\"\n" +
 		"ListenPort=8080\n" +
 		"\n" +
@@ -136,6 +143,8 @@ func TestInit(t *testing.T) {
 		"Type=\"\"\n" +
 		"Address=\"\"\n" +
 		"Port=0\n" +
+		"User=\"alice\"\n" +
+		"Password=\"superpassword\"\n" +
 		"\n" +
 		"[Database]\n" +
 		"Type=\"mysql\"\n" +
@@ -178,14 +187,17 @@ func TestInit(t *testing.T) {
 			},
 			want: &Configuration{
 				Server: Server{
+					Mode:          "debug",
 					ListenAddress: "0.0.0.0",
 					ListenPort:    8080,
 				},
 				Cache: Cache{
-					Enabled: false,
-					Type:    "",
-					Address: "",
-					Port:    0,
+					Enabled:  false,
+					Type:     "",
+					Address:  "",
+					Port:     0,
+					User:     "alice",
+					Password: "superpassword",
 				},
 				Database: Database{
 					Type:     "mysql",

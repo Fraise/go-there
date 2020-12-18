@@ -26,16 +26,19 @@ type Endpoint struct {
 
 // Server represents the server configuration.
 type Server struct {
+	Mode          string
 	ListenAddress string
 	ListenPort    int
 }
 
 // Cache represents the cache configuration.
 type Cache struct {
-	Enabled bool
-	Type    string
-	Address string
-	Port    int
+	Enabled  bool
+	Type     string
+	Address  string
+	Port     int
+	User     string
+	Password string
 }
 
 // Database represents the SQL database configuration.

@@ -55,6 +55,10 @@ func GetAuthMiddleware(ds DataSourcer) func(c *gin.Context) {
 				return
 			}
 
+			if u.Username == "" {
+				c.AbortWithStatus(http.StatusUnauthorized)
+			}
+
 			err = bcrypt.CompareHashAndPassword(u.ApiKeyHash, ak)
 
 			if err != nil {
@@ -75,6 +79,10 @@ func GetAuthMiddleware(ds DataSourcer) func(c *gin.Context) {
 				c.AbortWithStatus(http.StatusInternalServerError)
 				_ = c.Error(err)
 				return
+			}
+
+			if u.Username == "" {
+				c.AbortWithStatus(http.StatusUnauthorized)
 			}
 
 			err = bcrypt.CompareHashAndPassword(u.PasswordHash, []byte(l.Password))
@@ -115,7 +123,7 @@ func GetPermissionsMiddleware(adminOnly bool) func(c *gin.Context) {
 		// If an user is logged, make sure he can only see his data if he's not admin
 		reqUser := GetRequestedUser(c)
 
-		// If the resource "belong" to no one
+		// If the resource "belong" to no one. In this case, the request always access the client's own resources
 		if reqUser == "" {
 			return
 		}

@@ -8,7 +8,7 @@ import (
 	"go-there/logging"
 )
 
-// DataSourcer represents the datasource.DataSource methods needed by the api package to access the data.
+// DataSourcer represents the database.DataSource methods needed by the api package to access the data.
 type DataSourcer interface {
 	SelectUser(username string) (data.User, error)
 	SelectUserLogin(username string) (data.User, error)
@@ -16,8 +16,8 @@ type DataSourcer interface {
 	SelectUserLoginByApiKeySalt(apiKeySalt string) (data.User, error)
 	InsertUser(user data.User) error
 	DeleteUser(username string) error
-	UpdatetUserPassword(user data.User) error
-	UpdatetUserApiKey(user data.User) error
+	UpdateUserPassword(user data.User) error
+	UpdateUserApiKey(user data.User) error
 	InsertPath(path data.Path) error
 	DeletePath(path data.Path) error
 }

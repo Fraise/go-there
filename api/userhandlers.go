@@ -24,7 +24,7 @@ func getCreateHandler(ds DataSourcer) func(c *gin.Context) {
 			return
 		}
 
-		// We don't need to store the salt for a password
+		// We don't need to store the salt section individually for a password
 		hash, _, err := auth.GetHashFromPassword(cu.CreatePassword)
 
 		if err != nil {
@@ -138,7 +138,7 @@ func getUpdateUserHandler(ds DataSourcer) func(c *gin.Context) {
 
 			u.PasswordHash = hash
 
-			err = ds.UpdatetUserPassword(u)
+			err = ds.UpdateUserPassword(u)
 
 			if err != nil {
 				c.AbortWithStatus(http.StatusInternalServerError)
@@ -167,7 +167,7 @@ func getUpdateUserHandler(ds DataSourcer) func(c *gin.Context) {
 			u.ApiKeyHash = apiKeyHash
 			u.ApiKeySalt = apiKeySalt
 
-			err = ds.UpdatetUserApiKey(u)
+			err = ds.UpdateUserApiKey(u)
 
 			if err != nil {
 				c.AbortWithStatus(http.StatusInternalServerError)

@@ -7,6 +7,7 @@ var (
 	ErrSql             = errors.New("sql: error")
 	ErrSqlNoRow        = errors.New("sql: no row in result set")
 	ErrSqlDuplicateRow = errors.New("sql: duplicate row")
+	ErrRedis           = errors.New("redis: error")
 )
 
 // Auth errors
