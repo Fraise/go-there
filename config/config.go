@@ -26,6 +26,7 @@ type Endpoint struct {
 
 // Server represents the server configuration.
 type Server struct {
+	Mode          string
 	ListenAddress string
 	ListenPort    int
 }

@@ -138,7 +138,7 @@ func getUpdateUserHandler(ds DataSourcer) func(c *gin.Context) {
 
 			u.PasswordHash = hash
 
-			err = ds.UpdatetUserPassword(u)
+			err = ds.UpdateUserPassword(u)
 
 			if err != nil {
 				c.AbortWithStatus(http.StatusInternalServerError)
@@ -167,7 +167,7 @@ func getUpdateUserHandler(ds DataSourcer) func(c *gin.Context) {
 			u.ApiKeyHash = apiKeyHash
 			u.ApiKeySalt = apiKeySalt
 
-			err = ds.UpdatetUserApiKey(u)
+			err = ds.UpdateUserApiKey(u)
 
 			if err != nil {
 				c.AbortWithStatus(http.StatusInternalServerError)

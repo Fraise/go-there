@@ -44,6 +44,12 @@ func main() {
 		}()
 	}
 
+	if conf.Server.Mode == "debug" {
+		gin.SetMode(gin.DebugMode)
+	} else {
+		gin.SetMode(gin.ReleaseMode)
+	}
+
 	e := gin.New()
 
 	e.Use(gin.Logger())

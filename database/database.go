@@ -164,8 +164,8 @@ func (ds *DataBase) InsertUser(user data.User) error {
 	return nil
 }
 
-// UpdatetUserPassword updates an user's password in the database. Returns a data.ErrSql if it fails.
-func (ds *DataBase) UpdatetUserPassword(user data.User) error {
+// UpdateUserPassword updates an user's password in the database. Returns a data.ErrSql if it fails.
+func (ds *DataBase) UpdateUserPassword(user data.User) error {
 	_, err := ds.db.NamedExec("UPDATE users SET password_hash=:password_hash WHERE username=:username", user)
 
 	if err != nil {
@@ -175,8 +175,8 @@ func (ds *DataBase) UpdatetUserPassword(user data.User) error {
 	return nil
 }
 
-// UpdatetUserPassword updates an user's API key in the database. Returns a data.ErrSql if it fails.
-func (ds *DataBase) UpdatetUserApiKey(user data.User) error {
+// UpdateUserPassword updates an user's API key in the database. Returns a data.ErrSql if it fails.
+func (ds *DataBase) UpdateUserApiKey(user data.User) error {
 	_, err := ds.db.NamedExec("UPDATE users SET api_key_hash=:api_key_hash,api_key_salt=:api_key_salt WHERE username=:username", user)
 
 	if err != nil {

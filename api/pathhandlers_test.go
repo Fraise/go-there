@@ -57,14 +57,14 @@ func (mockDataSourcer) DeleteUser(username string) error {
 	return nil
 }
 
-func (mockDataSourcer) UpdatetUserPassword(user data.User) error {
+func (mockDataSourcer) UpdateUserPassword(user data.User) error {
 	switch user.Username {
 	}
 
 	return nil
 }
 
-func (mockDataSourcer) UpdatetUserApiKey(user data.User) error {
+func (mockDataSourcer) UpdateUserApiKey(user data.User) error {
 	switch user.Username {
 	}
 

@@ -46,6 +46,8 @@ The configuration uses the toml format.
 
 ### [Server]
 
+`Mode` Set the server to debug or release mode. Set to "debug" for extra gin logging or "release" for production
+
 `ListenAddress` The ip address the application listen to, formatted as "0.0.0.0"
 
 `ListenPort` Port used by the application

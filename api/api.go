@@ -16,8 +16,8 @@ type DataSourcer interface {
 	SelectUserLoginByApiKeySalt(apiKeySalt string) (data.User, error)
 	InsertUser(user data.User) error
 	DeleteUser(username string) error
-	UpdatetUserPassword(user data.User) error
-	UpdatetUserApiKey(user data.User) error
+	UpdateUserPassword(user data.User) error
+	UpdateUserApiKey(user data.User) error
 	InsertPath(path data.Path) error
 	DeletePath(path data.Path) error
 }

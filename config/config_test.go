@@ -13,6 +13,7 @@ func Test_parseConfig(t *testing.T) {
 	}
 
 	content := "[Server]\n" +
+		"Mode=\"debug\"\n" +
 		"ListenAddress=\"0.0.0.0\"\n" +
 		"ListenPort=8080\n" +
 		"\n" +
@@ -69,6 +70,7 @@ func Test_parseConfig(t *testing.T) {
 			},
 			want: &Configuration{
 				Server: Server{
+					Mode:          "debug",
 					ListenAddress: "0.0.0.0",
 					ListenPort:    8080,
 				},
@@ -122,6 +124,7 @@ func TestInit(t *testing.T) {
 	}
 
 	content := "[Server]\n" +
+		"Mode=\"debug\"\n" +
 		"ListenAddress=\"0.0.0.0\"\n" +
 		"ListenPort=8080\n" +
 		"\n" +
@@ -178,6 +181,7 @@ func TestInit(t *testing.T) {
 			},
 			want: &Configuration{
 				Server: Server{
+					Mode:          "debug",
 					ListenAddress: "0.0.0.0",
 					ListenPort:    8080,
 				},
