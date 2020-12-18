@@ -27,7 +27,7 @@ func getPostPathHandler(ds DataSourcer) func(c *gin.Context) {
 		p := data.Path{
 			Path:   cp.Path,
 			Target: cp.Target,
-			User:   u.Username,
+			UserId: u.Id,
 		}
 
 		err = ds.InsertPath(p)
@@ -62,8 +62,8 @@ func getDeletePathHandler(ds DataSourcer) func(c *gin.Context) {
 		}
 
 		p := data.Path{
-			Path: dp.Path,
-			User: u.Username,
+			Path:   dp.Path,
+			UserId: u.Id,
 		}
 
 		err = ds.DeletePath(p)

@@ -8,6 +8,7 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/jackc/pgx/v4"
 	"github.com/jmoiron/sqlx"
+	"github.com/rs/zerolog/log"
 	"go-there/config"
 	"go-there/data"
 )
@@ -49,6 +50,8 @@ func connect(config *config.Configuration, dbType string) (*DataBase, error) {
 			),
 		)
 	case "postgres":
+		// TODO
+		log.Fatal().Err(errors.New("not implemented"))
 		ds.db, err = sqlx.Connect(
 			dbType,
 			fmt.Sprintf(
@@ -90,11 +93,11 @@ func (ds *DataBase) SelectUser(username string) (data.User, error) {
 	return u, nil
 }
 
-// SelectUserLogin fetches the username,is_admin,password_hash as a user by his username in the database. Returns a
+// SelectUserLogin fetches the id,username,is_admin,password_hash of a user by his username in the database. Returns a
 // data.ErrSql if it fails.
 func (ds *DataBase) SelectUserLogin(username string) (data.User, error) {
 	u := data.User{}
-	err := ds.db.Get(&u, ds.db.Rebind("SELECT username,is_admin,password_hash FROM users WHERE username=?"), username)
+	err := ds.db.Get(&u, ds.db.Rebind("SELECT id,username,is_admin,password_hash FROM users WHERE username=?"), username)
 
 	if err != nil {
 		return data.User{}, fmt.Errorf("%w : %s", data.ErrSql, err)
@@ -116,10 +119,10 @@ func (ds *DataBase) SelectApiKeyHashByUser(username string) ([]byte, error) {
 	return ak, nil
 }
 
-// SelectUserLoginByApiKeySalt fetches the username,is_admin,api_key_hash of a user, by his API key salt.
+// SelectUserLoginByApiKeySalt fetches the id,username,is_admin,api_key_hash of a user, by his API key salt.
 func (ds *DataBase) SelectUserLoginByApiKeySalt(apiKeySalt string) (data.User, error) {
 	u := data.User{}
-	err := ds.db.Get(&u, ds.db.Rebind("SELECT username,is_admin,api_key_hash FROM users WHERE api_key_salt=?"), apiKeySalt)
+	err := ds.db.Get(&u, ds.db.Rebind("SELECT id,username,is_admin,api_key_hash FROM users WHERE api_key_salt=?"), apiKeySalt)
 
 	if err != nil {
 		return data.User{}, fmt.Errorf("%w : %s", data.ErrSql, err)
@@ -215,7 +218,7 @@ func (ds *DataBase) GetTarget(path string) (string, error) {
 // InsertPath adds a data.Path to the database. Returns a data.ErrSqlDuplicateRow if the path already exists or
 // data.ErrSql if it fails.
 func (ds *DataBase) InsertPath(path data.Path) error {
-	_, err := ds.db.NamedExec("INSERT INTO go (path,target,user) VALUES (:path,:target,:user)", path)
+	_, err := ds.db.NamedExec("INSERT INTO go (path,target,user_id) VALUES (:path,:target,:user_id)", path)
 
 	if err != nil {
 		if e, ok := err.(*mysql.MySQLError); ok {
@@ -233,7 +236,7 @@ func (ds *DataBase) InsertPath(path data.Path) error {
 
 // InsertPath deletes a data.Path in the database. Returns a data.ErrSql if it fails.
 func (ds *DataBase) DeletePath(path data.Path) error {
-	_, err := ds.db.NamedExec("DELETE FROM go WHERE path=:path", path)
+	_, err := ds.db.NamedExec("DELETE FROM go WHERE path=:path AND user_id=:user_id", path)
 
 	if err != nil {
 		return fmt.Errorf("%w : %s", data.ErrSql, err)

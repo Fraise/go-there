@@ -1,8 +1,9 @@
 package data
 
-// User contains all the informations representing an user internally. It should NOT be used to marshal/unmarshal
+// User contains all the information representing an user internally. It should NOT be used to marshal/unmarshal
 // incoming or outgoing data.
 type User struct {
+	Id           int    `db:"id" json:"id"`
 	Username     string `db:"username" json:"username"`
 	IsAdmin      bool   `db:"is_admin" json:"is_admin"`
 	PasswordHash []byte `db:"password_hash" json:"password_hash,omitempty"`
@@ -10,11 +11,24 @@ type User struct {
 	ApiKeyHash   []byte `db:"api_key_hash" json:"api_key_hash,omitempty"`
 }
 
-// Path contains the informations representing a redirection target internally.
+// UserInfo contains the name and redirections created by an user.
+type UserInfo struct {
+	Username string     `db:"username" json:"username"`
+	IsAdmin  bool       `db:"is_admin" json:"is_admin"`
+	Paths    []PathInfo `json:"paths,omitempty"`
+}
+
+// PathInfo contains the pair Path/Target.
+type PathInfo struct {
+	Path   string `db:"path" json:"path" binding:"required"`
+	Target string `db:"target" json:"target" binding:"required"`
+}
+
+// Path contains the information representing a redirection target internally.
 type Path struct {
 	Path   string `db:"path" json:"path" binding:"required"`
 	Target string `db:"target" json:"target" binding:"required"`
-	User   string `db:"user"`
+	UserId int    `db:"user_id"`
 }
 
 // CreatePath represents the data sent by the user to add a new redirection path.
