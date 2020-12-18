@@ -186,7 +186,7 @@ func (ds *DataBase) UpdateUserApiKey(user data.User) error {
 	return nil
 }
 
-// DeleteUser deletes a user in the database by his userame. Returns a data.ErrSql if it fails.
+// DeleteUser deletes a user in the database by his username. Returns a data.ErrSql if it fails.
 func (ds *DataBase) DeleteUser(username string) error {
 	_, err := ds.db.Exec(ds.db.Rebind("DELETE FROM users WHERE username=?"), username)
 
