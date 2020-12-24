@@ -2,6 +2,7 @@ package cache
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"go-there/config"
 	"go-there/data"
@@ -49,7 +50,9 @@ func (cache *Cache) GetTarget(path string) (string, error) {
 	err := cache.rc.Get(context.Background(), path, &target)
 
 	if err != nil {
-		return "", fmt.Errorf("%w: %s", data.ErrRedis, err)
+		if !errors.Is(err, rediscache.ErrCacheMiss) {
+			return "", fmt.Errorf("%w: %s", data.ErrRedis, err)
+		}
 	}
 
 	return target, nil

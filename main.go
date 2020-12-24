@@ -7,6 +7,7 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"go-there/api"
+	"go-there/cache"
 	"go-there/config"
 	"go-there/database"
 	"go-there/datasource"
@@ -16,6 +17,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
 )
 
@@ -62,14 +64,14 @@ func main() {
 		log.Fatal().Err(err).Send()
 	}
 
-	ds := datasource.Init(db, nil)
+	ds := datasource.Init(db, cache.Init(conf))
 
 	health.Init(conf, e)
 	gopath.Init(conf, e, ds)
 	api.Init(conf, e, ds)
 
 	s := http.Server{
-		Addr:    "0.0.0.0:8080",
+		Addr:    conf.Server.ListenAddress + ":" + strconv.Itoa(conf.Server.ListenPort),
 		Handler: e,
 	}
 
