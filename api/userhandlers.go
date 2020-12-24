@@ -94,7 +94,7 @@ func getUserHandler(ds DataSourcer) func(c *gin.Context) {
 		}
 
 		// Clean the data before responding to the request
-		c.JSON(http.StatusOK, data.User{Username: u.Username, IsAdmin: u.IsAdmin})
+		c.JSON(http.StatusOK, u)
 	}
 }
 

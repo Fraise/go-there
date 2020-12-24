@@ -22,7 +22,7 @@ printf "Starting go-there container...\n"
 docker-compose -f .test/docker-compose.test.yml up -d go-there
 
 printf "Waiting a bit for the initialization to finish"
-for i in {1..10}
+for i in {1..12}
 do
   sleep 1
   printf "."

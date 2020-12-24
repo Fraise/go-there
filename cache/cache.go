@@ -1,8 +1,8 @@
 package cache
 
 import (
+	"context"
 	"fmt"
-	"github.com/gin-gonic/gin"
 	"go-there/config"
 	"go-there/data"
 	"strconv"
@@ -40,13 +40,13 @@ func Init(config *config.Configuration) *Cache {
 
 // GetTarget gets a target in the cache from a path. Returns a data.ErrRedis if it fails. Returns "", nil if no cache
 // exists.
-func (cache *Cache) GetTarget(c *gin.Context, path string) (string, error) {
+func (cache *Cache) GetTarget(path string) (string, error) {
 	if cache == nil {
 		return "", nil
 	}
 
 	var target string
-	err := cache.rc.Get(c, path, &target)
+	err := cache.rc.Get(context.Background(), path, &target)
 
 	if err != nil {
 		return "", fmt.Errorf("%w: %s", data.ErrRedis, err)
@@ -57,13 +57,13 @@ func (cache *Cache) GetTarget(c *gin.Context, path string) (string, error) {
 
 // AddTarget adds a target to the cache with a ttl of 1 hour. Returns a data.ErrRedis if it fails. Returns
 // nil if no cache exists.
-func (cache *Cache) AddTarget(c *gin.Context, path data.Path) error {
+func (cache *Cache) AddTarget(path data.Path) error {
 	if cache == nil {
 		return nil
 	}
 
 	err := cache.rc.Set(&rediscache.Item{
-		Ctx:   c,
+		Ctx:   context.Background(),
 		Key:   path.Path,
 		Value: path.Target,
 		TTL:   time.Hour,
@@ -78,7 +78,7 @@ func (cache *Cache) AddTarget(c *gin.Context, path data.Path) error {
 
 // DeleteTargets deletes all targets corresponding to the paths array provided. Returns a data.ErrRedis if it fails.
 // Returns nil if no cache exists.
-func (cache *Cache) DeleteTargets(c *gin.Context, paths []string) error {
+func (cache *Cache) DeleteTargets(paths []string) error {
 	if cache == nil {
 		return nil
 	}
@@ -86,7 +86,7 @@ func (cache *Cache) DeleteTargets(c *gin.Context, paths []string) error {
 	var err error
 
 	for _, p := range paths {
-		if cacheErr := cache.rc.Delete(c, p); cacheErr != nil {
+		if cacheErr := cache.rc.Delete(context.Background(), p); cacheErr != nil {
 			err = cacheErr
 		}
 	}

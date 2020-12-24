@@ -15,11 +15,11 @@ import (
 type mockDataSourcer struct {
 }
 
-func (mockDataSourcer) SelectUser(username string) (data.User, error) {
+func (mockDataSourcer) SelectUser(username string) (data.UserInfo, error) {
 	switch username {
 	}
 
-	return data.User{}, nil
+	return data.UserInfo{}, nil
 }
 
 func (mockDataSourcer) SelectUserLogin(username string) (data.User, error) {

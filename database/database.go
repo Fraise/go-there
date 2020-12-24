@@ -81,16 +81,41 @@ func connect(config *config.Configuration, dbType string) (*DataBase, error) {
 	return ds, nil
 }
 
-// SelectUser fetches an complete user by his username in the database. Returns a data.ErrSql if it fails.
-func (ds *DataBase) SelectUser(username string) (data.User, error) {
-	u := data.User{}
-	err := ds.db.Get(&u, ds.db.Rebind("SELECT * FROM users WHERE username=?"), username)
+// SelectUser fetches a user with all the paths he created. Returns a data.ErrSql if it fails.
+func (ds *DataBase) SelectUser(username string) (data.UserInfo, error) {
+	result, err := ds.db.Queryx(ds.db.Rebind("SELECT users.username,users.is_admin,go.path,go.target FROM users INNER JOIN go ON users.id=go.user_id WHERE username=?"), username)
 
 	if err != nil {
-		return data.User{}, fmt.Errorf("%w : %s", data.ErrSql, err)
+		return data.UserInfo{}, fmt.Errorf("%w : %s", data.ErrSql, err)
 	}
 
-	return u, nil
+	type Row struct {
+		Username string `db:"username"`
+		IsAdmin  bool   `db:"is_admin"`
+		Path     string `db:"path"`
+		Target   string `db:"target"`
+	}
+
+	ui := data.UserInfo{}
+	ui.Paths = make([]data.PathInfo, 0)
+
+	for result.Next() {
+		r := Row{}
+		err := result.StructScan(&r)
+
+		if err != nil {
+			return data.UserInfo{}, fmt.Errorf("%w : %s", data.ErrSql, err)
+		}
+
+		if ui.Username == "" {
+			ui.Username = r.Username
+			ui.IsAdmin = r.IsAdmin
+		}
+
+		ui.Paths = append(ui.Paths, data.PathInfo{Path: r.Path, Target: r.Target})
+	}
+
+	return ui, nil
 }
 
 // SelectUserLogin fetches the id,username,is_admin,password_hash of a user by his username in the database. Returns a
@@ -234,7 +259,7 @@ func (ds *DataBase) InsertPath(path data.Path) error {
 	return nil
 }
 
-// InsertPath deletes a data.Path in the database. Returns a data.ErrSql if it fails.
+// DeletePath deletes a data.Path in the database. Returns a data.ErrSql if it fails.
 func (ds *DataBase) DeletePath(path data.Path) error {
 	_, err := ds.db.NamedExec("DELETE FROM go WHERE path=:path AND user_id=:user_id", path)
 
