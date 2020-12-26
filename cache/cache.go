@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/rs/zerolog/log"
 	"go-there/config"
 	"go-there/data"
 	"strconv"
@@ -23,17 +24,43 @@ func Init(config *config.Configuration) *Cache {
 		return nil
 	}
 
+	// Configure local cache
+	var localCache rediscache.LocalCache
+
+	if config.Cache.LocalCacheSize <= 0 || config.Cache.LocalCacheTtlSec <= 0 {
+		localCache = nil
+		log.Warn().Msg("cache enabled, but no local cache configured")
+	} else {
+		localCache = rediscache.NewTinyLFU(
+			config.Cache.LocalCacheSize,
+			time.Second*time.Duration(config.Cache.LocalCacheTtlSec),
+		)
+	}
+
+	// Configure network cache
 	cache := new(Cache)
 
+	// Never retries if it cannot connect to the instance. It will still tries to connect for each request, but it
+	// prevents the total request time to be super long (because of multiple retries) if if fails.
 	client := redis.NewClient(&redis.Options{
-		Addr:     config.Cache.Address + ":" + strconv.Itoa(config.Cache.Port),
-		Username: config.Cache.User,
-		Password: config.Cache.Password,
+		Network:    "",
+		Addr:       config.Cache.Address + ":" + strconv.Itoa(config.Cache.Port),
+		Username:   config.Cache.User,
+		Password:   config.Cache.Password,
+		MaxRetries: -1,
 	})
 
+	_, err := client.Ping(context.Background()).Result()
+
+	if err != nil {
+		log.Error().Err(fmt.Errorf("%w: %s", data.ErrRedis, err)).
+			Msg("cannot ping the configured redis instance, using local cache only")
+	}
+
+	// use a local cache of 1000 elements
 	cache.rc = rediscache.New(&rediscache.Options{
 		Redis:      client,
-		LocalCache: rediscache.NewTinyLFU(1000, time.Minute),
+		LocalCache: localCache,
 	})
 
 	return cache

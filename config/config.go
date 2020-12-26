@@ -33,12 +33,14 @@ type Server struct {
 
 // Cache represents the cache configuration.
 type Cache struct {
-	Enabled  bool
-	Type     string
-	Address  string
-	Port     int
-	User     string
-	Password string
+	Enabled          bool
+	Type             string
+	Address          string
+	Port             int
+	User             string
+	Password         string
+	LocalCacheSize   int
+	LocalCacheTtlSec int
 }
 
 // Database represents the SQL database configuration.

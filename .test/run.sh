@@ -7,6 +7,9 @@ printf "Done.\n"
 printf "Starting mysql database...\n"
 docker-compose -f .test/docker-compose.test.yml up -d mysql
 
+printf "Starting redis...\n"
+docker-compose -f .test/docker-compose.test.yml up -d redis
+
 printf "Building go-there container...\n"
 if ! docker-compose -f .test/docker-compose.test.yml build go-there;
 then
