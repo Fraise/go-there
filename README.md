@@ -74,15 +74,26 @@ The available configuration groups are :
 
 ### [Cache]
 
-The caching feature does not work yet. The configuration should looks like:
+The cache supports both Redis and local cache. It is only used to cache redirection requests, and local and network
+caching can be enabled at the same time. It currently only supports a single Redis instance.
 
-`Enabled`
+`Enabled` Enable the Redis cache
 
-`Type`
+`Type` Unused
 
-`Address`
+`Address` Network address of the Redis instance
 
-`Port`
+`Port` Port used by Redis
+
+`User` Username used to connect to the Redis instance
+
+`Password` Password used to connect to the Redis instance
+
+`LocalCacheEnabled` Enable the local cache
+
+`LocalCacheSize` Size of the cache (in number of path/target pair)
+
+`LocalCacheTtlSec` Lifetime in seconds of the elements in the local cache
 
 ### [Database]
 
@@ -106,8 +117,8 @@ Currently, the supported database type is mysql. In the future, postgresql and s
 
 ### [Logs]
 
-The logs should be enabled on an endpoint basis as described in the *[Endpoints]* section. The available options common
-to every endpoint are :
+Base logging is enabled for the base operations (initialization...) but request logging should be enabled on an endpoint
+basis as described in the *[Endpoints]* section. The available options common to every endpoint are :
 
 `File` The file where the logs will be appended. The `$stdout` and `$stderr` string will respectively output the logs in
 the OS' stdout or stderr. If left empty, it will output to stdout

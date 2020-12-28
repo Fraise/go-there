@@ -18,46 +18,50 @@ type Cache struct {
 	rc *rediscache.Cache
 }
 
-// Init initializes the Redis cache from the configuration. Returns nil if the cache is not enabled.
+// Init initializes the Redis cache from the configuration. Returns nil if no cache is enabled.
 func Init(config *config.Configuration) *Cache {
-	if !config.Cache.Enabled {
+	if config.Cache.Enabled && config.Cache.LocalCacheEnabled {
 		return nil
 	}
 
 	// Configure local cache
 	var localCache rediscache.LocalCache
 
-	if config.Cache.LocalCacheSize <= 0 || config.Cache.LocalCacheTtlSec <= 0 {
-		localCache = nil
-		log.Warn().Msg("cache enabled, but no local cache configured")
-	} else {
-		localCache = rediscache.NewTinyLFU(
-			config.Cache.LocalCacheSize,
-			time.Second*time.Duration(config.Cache.LocalCacheTtlSec),
-		)
+	if config.Cache.LocalCacheEnabled {
+		if config.Cache.LocalCacheSize <= 0 || config.Cache.LocalCacheTtlSec <= 0 {
+			log.Error().Msg("local cache enabled, but not configured")
+		} else {
+			localCache = rediscache.NewTinyLFU(
+				config.Cache.LocalCacheSize,
+				time.Second*time.Duration(config.Cache.LocalCacheTtlSec),
+			)
+		}
 	}
 
 	// Configure network cache
-	cache := new(Cache)
+	client := new(redis.Client)
 
-	// Never retries if it cannot connect to the instance. It will still tries to connect for each request, but it
-	// prevents the total request time to be super long (because of multiple retries) if if fails.
-	client := redis.NewClient(&redis.Options{
-		Network:    "",
-		Addr:       config.Cache.Address + ":" + strconv.Itoa(config.Cache.Port),
-		Username:   config.Cache.User,
-		Password:   config.Cache.Password,
-		MaxRetries: -1,
-	})
+	if config.Cache.Enabled {
+		// Never retries if it cannot connect to the instance. It will still tries to connect for each request, but it
+		// prevents the total request time to be super long (because of multiple retries) if if fails.
+		client = redis.NewClient(&redis.Options{
+			Network:    "",
+			Addr:       config.Cache.Address + ":" + strconv.Itoa(config.Cache.Port),
+			Username:   config.Cache.User,
+			Password:   config.Cache.Password,
+			MaxRetries: -1,
+		})
 
-	_, err := client.Ping(context.Background()).Result()
+		_, err := client.Ping(context.Background()).Result()
 
-	if err != nil {
-		log.Error().Err(fmt.Errorf("%w: %s", data.ErrRedis, err)).
-			Msg("cannot ping the configured redis instance, using local cache only")
+		if err != nil {
+			log.Error().Err(fmt.Errorf("%w: %s", data.ErrRedis, err)).
+				Msg("cannot ping the configured redis instance, using local cache only")
+		}
 	}
 
-	// use a local cache of 1000 elements
+	cache := new(Cache)
+
 	cache.rc = rediscache.New(&rediscache.Options{
 		Redis:      client,
 		LocalCache: localCache,

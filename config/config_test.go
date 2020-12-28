@@ -18,18 +18,21 @@ func Test_parseConfig(t *testing.T) {
 		"ListenPort=8080\n" +
 		"\n" +
 		"[Endpoints]\n" +
-		"create_users={ Enabled=true, Auth=false, AdminOnly=false }\n" +
+		"create_users={ Enabled=true, Auth=false, AdminOnly=false, Log=true }\n" +
 		"manage_users={ Enabled=true, Auth=false, AdminOnly=false }\n" +
-		"go={ Enabled=true, Auth=false, AdminOnly=false }\n" +
+		"go={ Enabled=true, Auth=false, AdminOnly=false, Log=true }\n" +
 		"manage_paths={ Enabled=true, Auth=false, AdminOnly=false }\n" +
 		"\n" +
 		"[Cache]\n" +
-		"Enabled=false\n" +
-		"Type=\"\"\n" +
-		"Address=\"\"\n" +
-		"Port=0\n" +
+		"Enabled=true\n" +
+		"Type=\"redis\"\n" +
+		"Address=\"localhost\"\n" +
+		"Port=6379\n" +
 		"User=\"alice\"\n" +
 		"Password=\"superpassword\"\n" +
+		"LocalCacheEnabled=true\n" +
+		"LocalCacheSize=1000\n" +
+		"LocalCacheTtlSec=3600\n" +
 		"\n" +
 		"[Database]\n" +
 		"Type=\"mysql\"\n" +
@@ -39,7 +42,11 @@ func Test_parseConfig(t *testing.T) {
 		"Protocol=\"tcp\"\n" +
 		"Name=\"go_there_db\"\n" +
 		"User=\"my_user\"\n" +
-		"Password=\"superpassword\""
+		"Password=\"superpassword\"\n" +
+		"\n" +
+		"[Logs]\n" +
+		"File=\"\"\n" +
+		"AsJSON=true\n"
 
 	tmpf, err := ioutil.TempFile(os.TempDir(), "go-there.conf")
 
@@ -77,12 +84,15 @@ func Test_parseConfig(t *testing.T) {
 					ListenPort:    8080,
 				},
 				Cache: Cache{
-					Enabled:  false,
-					Type:     "",
-					Address:  "",
-					Port:     0,
-					User:     "alice",
-					Password: "superpassword",
+					Enabled:           true,
+					Type:              "redis",
+					Address:           "localhost",
+					Port:              6379,
+					User:              "alice",
+					Password:          "superpassword",
+					LocalCacheEnabled: true,
+					LocalCacheSize:    1000,
+					LocalCacheTtlSec:  3600,
 				},
 				Database: Database{
 					Type:     "mysql",
@@ -95,10 +105,14 @@ func Test_parseConfig(t *testing.T) {
 					Password: "superpassword",
 				},
 				Endpoints: map[string]Endpoint{
-					"create_users": {Enabled: true, Auth: false, AdminOnly: false},
+					"create_users": {Enabled: true, Auth: false, AdminOnly: false, Log: true},
 					"manage_users": {Enabled: true, Auth: false, AdminOnly: false},
-					"go":           {Enabled: true, Auth: false, AdminOnly: false},
+					"go":           {Enabled: true, Auth: false, AdminOnly: false, Log: true},
 					"manage_paths": {Enabled: true, Auth: false, AdminOnly: false},
+				},
+				Logs: Logs{
+					File:   "",
+					AsJSON: true,
 				},
 			},
 			wantErr: false,
@@ -133,18 +147,21 @@ func TestInit(t *testing.T) {
 		"ListenPort=8080\n" +
 		"\n" +
 		"[Endpoints]\n" +
-		"create_users={ Enabled=true, Auth=false, AdminOnly=false }\n" +
+		"create_users={ Enabled=true, Auth=false, AdminOnly=false, Log=true }\n" +
 		"manage_users={ Enabled=true, Auth=false, AdminOnly=false }\n" +
-		"go={ Enabled=true, Auth=false, AdminOnly=false }\n" +
+		"go={ Enabled=true, Auth=false, AdminOnly=false, Log=true }\n" +
 		"manage_paths={ Enabled=true, Auth=false, AdminOnly=false }\n" +
 		"\n" +
 		"[Cache]\n" +
-		"Enabled=false\n" +
-		"Type=\"\"\n" +
-		"Address=\"\"\n" +
-		"Port=0\n" +
+		"Enabled=true\n" +
+		"Type=\"redis\"\n" +
+		"Address=\"localhost\"\n" +
+		"Port=6379\n" +
 		"User=\"alice\"\n" +
 		"Password=\"superpassword\"\n" +
+		"LocalCacheEnabled=true\n" +
+		"LocalCacheSize=1000\n" +
+		"LocalCacheTtlSec=3600\n" +
 		"\n" +
 		"[Database]\n" +
 		"Type=\"mysql\"\n" +
@@ -154,7 +171,11 @@ func TestInit(t *testing.T) {
 		"Protocol=\"tcp\"\n" +
 		"Name=\"go_there_db\"\n" +
 		"User=\"my_user\"\n" +
-		"Password=\"superpassword\""
+		"Password=\"superpassword\"\n" +
+		"\n" +
+		"[Logs]\n" +
+		"File=\"\"\n" +
+		"AsJSON=true\n"
 
 	tmpf, err := ioutil.TempFile(os.TempDir(), "go-there.conf")
 
@@ -192,12 +213,15 @@ func TestInit(t *testing.T) {
 					ListenPort:    8080,
 				},
 				Cache: Cache{
-					Enabled:  false,
-					Type:     "",
-					Address:  "",
-					Port:     0,
-					User:     "alice",
-					Password: "superpassword",
+					Enabled:           true,
+					Type:              "redis",
+					Address:           "localhost",
+					Port:              6379,
+					User:              "alice",
+					Password:          "superpassword",
+					LocalCacheEnabled: true,
+					LocalCacheSize:    1000,
+					LocalCacheTtlSec:  3600,
 				},
 				Database: Database{
 					Type:     "mysql",
@@ -210,10 +234,14 @@ func TestInit(t *testing.T) {
 					Password: "superpassword",
 				},
 				Endpoints: map[string]Endpoint{
-					"create_users": {Enabled: true, Auth: false, AdminOnly: false},
+					"create_users": {Enabled: true, Auth: false, AdminOnly: false, Log: true},
 					"manage_users": {Enabled: true, Auth: false, AdminOnly: false},
-					"go":           {Enabled: true, Auth: false, AdminOnly: false},
+					"go":           {Enabled: true, Auth: false, AdminOnly: false, Log: true},
 					"manage_paths": {Enabled: true, Auth: false, AdminOnly: false},
+				},
+				Logs: Logs{
+					File:   "",
+					AsJSON: true,
 				},
 			},
 			wantErr: false,
