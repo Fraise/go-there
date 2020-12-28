@@ -20,8 +20,8 @@ type UserInfo struct {
 
 // PathInfo contains the pair Path/Target.
 type PathInfo struct {
-	Path   string `db:"path" json:"path" binding:"required"`
-	Target string `db:"target" json:"target" binding:"required"`
+	Path   string `db:"path" json:"path,omitempty" binding:"required"`
+	Target string `db:"target" json:"target,omitempty" binding:"required"`
 }
 
 // Path contains the information representing a redirection target internally.

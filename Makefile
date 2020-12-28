@@ -6,8 +6,8 @@ build:
 build-static:
 	env CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -tags=jsoniter -a -o go-there
 
-test:
+tests:
 	go test -v -tags=jsoniter ./...
 
-integration-test:
+integration-tests:
 	bash .test/run.sh

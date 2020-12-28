@@ -10,7 +10,7 @@ import (
 
 // DataSourcer represents the database.DataSource methods needed by the api package to access the data.
 type DataSourcer interface {
-	SelectUser(username string) (data.User, error)
+	SelectUser(username string) (data.UserInfo, error)
 	SelectUserLogin(username string) (data.User, error)
 	SelectApiKeyHashByUser(username string) ([]byte, error)
 	SelectUserLoginByApiKeySalt(apiKeySalt string) (data.User, error)

@@ -1,6 +1,7 @@
 package datasource
 
 import (
+	"github.com/rs/zerolog/log"
 	"go-there/cache"
 	"go-there/data"
 	"go-there/database"
@@ -22,7 +23,7 @@ func Init(db *database.DataBase, cache *cache.Cache) *DataSource {
 }
 
 // SelectUser fetches an complete user by his username in the database. Returns a data.ErrSql if it fails.
-func (ds *DataSource) SelectUser(username string) (data.User, error) {
+func (ds *DataSource) SelectUser(username string) (data.UserInfo, error) {
 	return ds.DataBase.SelectUser(username)
 }
 
@@ -66,22 +67,79 @@ func (ds *DataSource) UpdateUserApiKey(user data.User) error {
 
 // DeleteUser deletes a user in the database by his username. Returns a data.ErrSql if it fails.
 func (ds *DataSource) DeleteUser(username string) error {
+	ui, err := ds.DataBase.SelectUser(username)
+
+	if err != nil {
+		return err
+	}
+
+	paths := make([]string, len(ui.Paths))
+
+	for i := range ui.Paths {
+		paths[i] = ui.Paths[i].Path
+	}
+
+	err = ds.Cache.DeleteTargets(paths)
+
+	if err != nil {
+		log.Warn().Err(err).Msg("error removing user targets from cache")
+	}
+
 	return ds.DataBase.DeleteUser(username)
 }
 
-// GetTarget gets a target in the database from a path. Returns a data.ErrSqlNoRow if the target doesn't exist or
-// data.ErrSql if it fails.
+// GetTarget tries to get a target from the cache, then from the database on a miss. Returns a data.ErrSqlNoRow if the
+// target doesn't exist or data.ErrSql if it fails. The target is immediately added to the cache on a miss.
 func (ds *DataSource) GetTarget(path string) (string, error) {
-	return ds.DataBase.GetTarget(path)
+	t, err := ds.Cache.GetTarget(path)
+
+	if err != nil {
+		log.Warn().Err(err).Msg("error getting target in cache")
+	}
+
+	if t != "" {
+		return t, nil
+	}
+
+	t, err = ds.DataBase.GetTarget(path)
+
+	if err != nil {
+		return "", err
+	}
+
+	// On cache miss
+	err = ds.Cache.AddTarget(data.Path{
+		Path:   path,
+		Target: t,
+	})
+
+	if err != nil {
+		log.Warn().Err(err).Msg("error inserting path in cache")
+	}
+
+	return t, nil
 }
 
-// InsertPath adds a data.Path to the database. Returns a data.ErrSqlDuplicateRow if the path already exists or
-// data.ErrSql if it fails.
+// InsertPath adds a data.Path to the cache, then to the database. Returns a data.ErrSqlDuplicateRow if the path already
+// exists or data.ErrSql if the operation fails.
 func (ds *DataSource) InsertPath(path data.Path) error {
+	err := ds.Cache.AddTarget(path)
+
+	if err != nil {
+		log.Warn().Err(err).Msg("error inserting path in cache")
+	}
+
 	return ds.DataBase.InsertPath(path)
 }
 
-// InsertPath deletes a data.Path in the database. Returns a data.ErrSql if it fails.
+// DeletePath removes a data.Path from the cache, then deletes it in the database. Logs a warning if the cache returns
+// an error, returns a data.ErrSql if the operation fails.
 func (ds *DataSource) DeletePath(path data.Path) error {
+	err := ds.Cache.DeleteTargets([]string{path.Path})
+
+	if err != nil {
+		log.Warn().Err(err).Msg("error deleting path in cache")
+	}
+
 	return ds.DataBase.DeletePath(path)
 }

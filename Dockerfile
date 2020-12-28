@@ -6,7 +6,7 @@ COPY . .
 
 RUN go mod download
 
-RUN make test
+RUN make tests
 RUN make build-static
 
 FROM scratch

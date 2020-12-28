@@ -29,5 +29,9 @@ services:
       MYSQL_PASSWORD: superpassword
     networks:
       - go-there_testing
+  redis:
+    image: redis:6-alpine
+    ports:
+      - '6379:6379'
 networks:
   go-there_testing:
