@@ -7,6 +7,7 @@ import (
 	"go-there/config"
 	"go-there/data"
 	"io"
+	"io/ioutil"
 	"os"
 )
 
@@ -21,6 +22,8 @@ func Init(conf *config.Configuration) (*os.File, error) {
 		output = os.Stdout
 	case "$stderr":
 		output = os.Stderr
+	case "$null":
+		output = ioutil.Discard
 	default:
 		var err error
 		f, err = os.OpenFile(conf.Logs.File, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)

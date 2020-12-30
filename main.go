@@ -14,10 +14,9 @@ import (
 	"go-there/gopath"
 	"go-there/health"
 	"go-there/logging"
-	"net/http"
+	"go-there/server"
 	"os"
 	"os/signal"
-	"strconv"
 	"syscall"
 )
 
@@ -70,16 +69,11 @@ func main() {
 	gopath.Init(conf, e, ds)
 	api.Init(conf, e, ds)
 
-	s := http.Server{
-		Addr:    conf.Server.ListenAddress + ":" + strconv.Itoa(conf.Server.ListenPort),
-		Handler: e,
+	if conf.Server.HttpListenPort <= 0 && conf.Server.HttpsListenPort <= 0 {
+		log.Fatal().Err(err).Msg("no listening port configured")
 	}
 
-	go func() {
-		if err := s.ListenAndServe(); err != http.ErrServerClosed {
-			log.Error().Err(err).Send()
-		}
-	}()
+	s, tlsServer := server.Start(conf, e)
 
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
@@ -89,7 +83,16 @@ func main() {
 	log.Info().Msgf("received %v", sig)
 	log.Info().Msgf("shutting down the http server")
 
-	if err := s.Shutdown(context.Background()); err != nil {
-		log.Error().Err(err).Msg("error shutting down the http server")
+	if s != nil {
+		if err := s.Shutdown(context.Background()); err != nil {
+			log.Error().Err(err).Msg("error shutting down the http server")
+		}
 	}
+
+	if tlsServer != nil {
+		if err := tlsServer.Shutdown(context.Background()); err != nil {
+			log.Error().Err(err).Msg("error shutting down the http server")
+		}
+	}
+
 }
