@@ -15,7 +15,7 @@ func Test_parseConfig(t *testing.T) {
 	content := "[Server]\n" +
 		"Mode=\"debug\"\n" +
 		"ListenAddress=\"0.0.0.0\"\n" +
-		"ListenPort=8080\n" +
+		"HttpListenPort=8080\n" +
 		"\n" +
 		"[Endpoints]\n" +
 		"create_users={ Enabled=true, Auth=false, AdminOnly=false, Log=true }\n" +
@@ -79,9 +79,9 @@ func Test_parseConfig(t *testing.T) {
 			},
 			want: &Configuration{
 				Server: Server{
-					Mode:          "debug",
-					ListenAddress: "0.0.0.0",
-					ListenPort:    8080,
+					Mode:           "debug",
+					ListenAddress:  "0.0.0.0",
+					HttpListenPort: 8080,
 				},
 				Cache: Cache{
 					Enabled:           true,
@@ -144,7 +144,7 @@ func TestInit(t *testing.T) {
 	content := "[Server]\n" +
 		"Mode=\"debug\"\n" +
 		"ListenAddress=\"0.0.0.0\"\n" +
-		"ListenPort=8080\n" +
+		"HttpListenPort=8080\n" +
 		"\n" +
 		"[Endpoints]\n" +
 		"create_users={ Enabled=true, Auth=false, AdminOnly=false, Log=true }\n" +
@@ -208,9 +208,9 @@ func TestInit(t *testing.T) {
 			},
 			want: &Configuration{
 				Server: Server{
-					Mode:          "debug",
-					ListenAddress: "0.0.0.0",
-					ListenPort:    8080,
+					Mode:           "debug",
+					ListenAddress:  "0.0.0.0",
+					HttpListenPort: 8080,
 				},
 				Cache: Cache{
 					Enabled:           true,

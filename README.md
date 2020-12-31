@@ -13,7 +13,7 @@ It is currently a work in progress, and the API should not be considered stable 
 ## Authentication
 
 The authentication is handled by the `auth` middleware. It can be enabled per service as described in the 
-[Configuration](#Configuration) section. A user can either use a username/password combination or an API key.
+[Configuration](#Configuration) section. A user can either use a username/password combination, or an API key.
 
 The username/password can be provided either in JSON form in the request body:
 
@@ -40,6 +40,8 @@ X-Api-Key: bi44RkM4YWwueFE0d2RvTkF5akpJTzpPSC1rbkdMcm91VlA3N01pZkJ1Y0F3PT0=
 
 If both authentication methods are used at the same time, only the API key will be checked.
 
+***Do not use the example API key anywhere, even for testing purpose!***
+
 ## Configuration
 
 The configuration uses the toml format.
@@ -50,7 +52,21 @@ The configuration uses the toml format.
 
 `ListenAddress` The ip address the application listen to, formatted as "0.0.0.0"
 
-`ListenPort` Port used by the application
+`HttpListenPort` Port used by the application for http calls
+
+`HttpsListenPort` Port used by the application for https calls
+
+`UseAutoCert` Use Let's encrypt autocert to get a SSL certificate for the configured domains
+
+`Domains` Must be set if using autocert. This is the list of the allowed domains. The domains should be exact matches 
+and cannot use regexes or wildcards
+
+`CertCache` Should be set if using autocert. Specifies the cache directory for the certificates fetched. If it does not 
+exist, it is created
+
+`CertPath` Path to a manually provided certificate. Is ignored if `UseAutoCert` is set to `true`
+
+`KeyPath` Path to a manually provided server key. Is ignored if `UseAutoCert` is set to `true`
 
 ### [Endpoints]
 
@@ -121,7 +137,7 @@ Base logging is enabled for the base operations (initialization...) but request 
 basis as described in the *[Endpoints]* section. The available options common to every endpoint are :
 
 `File` The file where the logs will be appended. The `$stdout` and `$stderr` string will respectively output the logs in
-the OS' stdout or stderr. If left empty, it will output to stdout
+the OS' stdout or stderr. The `$null` string will discard all log output. If left empty, it will output to stdout.
 
 `AsJSON` Format the logs as a JSON string. If it is set to false, the logs will be formatted and colored for the 
-console, so they will be difficult to parse in a file
+console, so they will be difficult to parse in a file.
