@@ -93,6 +93,8 @@ func getUserHandler(ds DataSourcer) func(c *gin.Context) {
 			return
 		}
 
+		// TODO return 404 if user not found
+
 		// Clean the data before responding to the request
 		c.JSON(http.StatusOK, u)
 	}

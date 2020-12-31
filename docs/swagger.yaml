@@ -1,0 +1,204 @@
+swagger: "2.0"
+info:
+  description: "go-there"
+  version: "0.3"
+  title: "go-there API"
+  license:
+    name: "MIT license"
+    url: "https://github.com/Fraise/go-there/blob/master/LICENSE"
+host: "fraise.github.io"
+basePath: "/"
+tags:
+  - name: "users"
+    description: "Users related operations"
+  - name: "path"
+    description: "Paths related operations"
+  - name: "go"
+    description: "Redirection URL"
+schemes:
+  - "https"
+  - "http"
+security:
+  - ApiKeyAuth: []
+paths:
+  /api/users:
+    post:
+      tags:
+        - "users"
+      summary: "Create a new user"
+      description: ""
+      operationId: "createUser"
+      parameters:
+        - in: "body"
+          name: "body"
+          description: "User that will be created"
+          required: true
+          schema:
+            $ref: "#/definitions/CreateUser"
+      responses:
+        "200":
+          description: "Returns the generated API key"
+          schema:
+            $ref: "#/definitions/ApiKey"
+        "400":
+          description: "Invalid input/User already exists"
+          schema:
+            $ref: "#/definitions/Error"
+  /api/users/{user}:
+    get:
+      tags:
+        - "users"
+      summary: "Get the user and all the paths they created"
+      operationId: "getUser"
+      produces:
+        - "application/json"
+      responses:
+        "200":
+          description: "Returns the user"
+          schema:
+            $ref: "#/definitions/UserInfo"
+        "404":
+          description: "The user does not exist"
+    patch:
+      tags:
+        - "users"
+      summary: "Update an existing user"
+      description: ""
+      operationId: "updateUser"
+      consumes:
+        - "application/json"
+      produces:
+        - "application/json"
+      parameters:
+        - in: "body"
+          name: "body"
+          description: "The user fields to update"
+          required: true
+          schema:
+            $ref: "#/definitions/UpdateUser"
+      responses:
+        "200":
+          description: "Returns a new API key if requested"
+          schema:
+            $ref: "#/definitions/ApiKey"
+        "400":
+          description: "Invalid input"
+    delete:
+      tags:
+        - "users"
+      summary: "Delete an user"
+      description: ""
+      operationId: "deleteUser"
+      responses:
+        "200":
+          description: "User deleted"
+  /api/path:
+    post:
+      tags:
+        - "path"
+      summary: "Create a new path"
+      description: ""
+      operationId: "createPath"
+      parameters:
+        - in: "body"
+          name: "body"
+          description: "Path that will be created"
+          required: true
+          schema:
+            $ref: "#/definitions/Path"
+      responses:
+        "200":
+          description: "Ok"
+        "400":
+          description: "Invalid input/Path already exists"
+          schema:
+            $ref: "#/definitions/Error"
+    delete:
+      tags:
+        - "path"
+      summary: "Delete a path"
+      description: ""
+      operationId: "deletePath"
+      parameters:
+        - in: "body"
+          name: "body"
+          description: "Path that will be deleted"
+          required: true
+          schema:
+            $ref: "#/definitions/DeletePath"
+      responses:
+        "200":
+          description: "Path deleted"
+        "400":
+          description: "Invalid input"
+  /go/{path}:
+    get:
+      tags:
+        - "go"
+      summary: "Get a redirection path"
+      description: ""
+      operationId: "getRedirect"
+      responses:
+        "302":
+          description: "Path found"
+        "404":
+          description: "The requested path does not exist"
+securityDefinitions:
+  api_key:
+    type: "apiKey"
+    name: "api_key"
+    in: "header"
+definitions:
+  CreateUser:
+    type: "object"
+    properties:
+      create_user:
+        type: "string"
+      create_password:
+        type: "string"
+  UpdateUser:
+    type: "object"
+    properties:
+      new_password:
+        type: "string"
+      new_api_key:
+        type: "boolean"
+  Path:
+    type: "object"
+    properties:
+      path:
+        type: "string"
+      target:
+        type: "string"
+  DeletePath:
+    type: "object"
+    properties:
+      path:
+        type: "string"
+  UserInfo:
+    type: "object"
+    properties:
+      username:
+        type: "string"
+      is_admin:
+        type: "boolean"
+      paths:
+        type: "array"
+        items:
+          $ref: "#/definitions/Path"
+  ApiKey:
+    type: "object"
+    properties:
+      api_key:
+        type: "string"
+  Error:
+    type: "object"
+    properties:
+      error:
+        type: "string"
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-Api-Key
