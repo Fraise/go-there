@@ -36,7 +36,6 @@
 <script src="dist/swagger-ui-standalone-preset.js" charset="UTF-8"> </script>
 <script>
     window.onload = function() {
-        // Begin Swagger UI call region
         const ui = SwaggerUIBundle({
             url: "swagger.yaml",
             dom_id: '#swagger-ui',
@@ -45,13 +44,9 @@
                 SwaggerUIBundle.presets.apis,
                 SwaggerUIStandalonePreset
             ],
-            plugins: [
-                SwaggerUIBundle.plugins.DownloadUrl
-            ],
-            layout: "StandaloneLayout",
+            layout: "BaseLayout",
             validatorUrl: null
         })
-        // End Swagger UI call region
 
         window.ui = ui
     }
