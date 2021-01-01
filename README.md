@@ -10,6 +10,10 @@ logging and monitoring out of the box.
 
 It is currently a work in progress, and the API should not be considered stable before version 1.0.
 
+## API
+
+You can find the API documentation on [this page](https://fraise.github.io/go-there/).
+
 ## Authentication
 
 The authentication is handled by the `auth` middleware. It can be enabled per service as described in the 

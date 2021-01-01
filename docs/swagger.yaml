@@ -1,12 +1,11 @@
 swagger: "2.0"
 info:
-  description: "go-there"
-  version: "0.3"
   title: "go-there API"
+  description: "This is the API documentation of the [go-there URL shortener](https://github.com/Fraise/go-there)."
+  version: "0.3"
   license:
     name: "MIT license"
     url: "https://github.com/Fraise/go-there/blob/master/LICENSE"
-host: "fraise.github.io"
 basePath: "/"
 tags:
   - name: "users"
@@ -20,6 +19,16 @@ schemes:
   - "http"
 security:
   - ApiKeyAuth: []
+  - PasswordAuth: []
+securityDefinitions:
+  ApiKeyAuth:
+    type: "apiKey"
+    name: "X-Api-Key"
+    in: "header"
+  PasswordAuth:
+    type: "basic"
+    name: "password"
+    in: "body"
 paths:
   /api/users:
     post:
@@ -143,24 +152,22 @@ paths:
           description: "Path found"
         "404":
           description: "The requested path does not exist"
-securityDefinitions:
-  api_key:
-    type: "apiKey"
-    name: "api_key"
-    in: "header"
 definitions:
   CreateUser:
     type: "object"
     properties:
       create_user:
         type: "string"
+        example: "alice"
       create_password:
         type: "string"
+        example: "superpassword"
   UpdateUser:
     type: "object"
     properties:
       new_password:
         type: "string"
+        example: "supernewpassword"
       new_api_key:
         type: "boolean"
   Path:
@@ -168,20 +175,25 @@ definitions:
     properties:
       path:
         type: "string"
+        example: "ex"
       target:
         type: "string"
+        example: "http://example.com/"
   DeletePath:
     type: "object"
     properties:
       path:
         type: "string"
+        example: "ex"
   UserInfo:
     type: "object"
     properties:
       username:
         type: "string"
+        example: "alice"
       is_admin:
         type: "boolean"
+        example: false
       paths:
         type: "array"
         items:
@@ -191,14 +203,10 @@ definitions:
     properties:
       api_key:
         type: "string"
+        example: "bi44RkM4YWwueFE0d2RvTkF5akpJTzpPSC1rbkdMcm91VlA3N01pZkJ1Y0F3PT0="
   Error:
     type: "object"
     properties:
       error:
         type: "string"
-components:
-  securitySchemes:
-    ApiKeyAuth:
-      type: apiKey
-      in: header
-      name: X-Api-Key
+        example: "user already exists"
