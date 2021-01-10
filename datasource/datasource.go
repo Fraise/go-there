@@ -27,6 +27,11 @@ func (ds *DataSource) SelectUser(username string) (data.UserInfo, error) {
 	return ds.DataBase.SelectUser(username)
 }
 
+// SelectAllUsers fetches the complete list of all users. Returns a data.ErrSql if it fails.
+func (ds *DataSource) SelectAllUsers() ([]data.UserInfo, error) {
+	return ds.DataBase.SelectAllUsers()
+}
+
 // SelectUserLogin fetches the id,username,is_admin,password_hash of a user by his username in the database. Returns a
 // data.ErrSql if it fails.
 func (ds *DataSource) SelectUserLogin(username string) (data.User, error) {

@@ -22,6 +22,10 @@ func (mockDataSourcer) SelectUser(username string) (data.UserInfo, error) {
 	return data.UserInfo{}, nil
 }
 
+func (mockDataSourcer) SelectAllUsers() ([]data.UserInfo, error) {
+	return nil, nil
+}
+
 func (mockDataSourcer) SelectUserLogin(username string) (data.User, error) {
 	switch username {
 	}

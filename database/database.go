@@ -118,6 +118,35 @@ func (ds *DataBase) SelectUser(username string) (data.UserInfo, error) {
 	return ui, nil
 }
 
+// SelectAllUsers fetches the complete list of all users. Returns a data.ErrSql if it fails.
+func (ds *DataBase) SelectAllUsers() ([]data.UserInfo, error) {
+	result, err := ds.db.Queryx("SELECT users.username,users.is_admin FROM users")
+
+	if err != nil {
+		return nil, fmt.Errorf("%w : %s", data.ErrSql, err)
+	}
+
+	type Row struct {
+		Username string `db:"username"`
+		IsAdmin  bool   `db:"is_admin"`
+	}
+
+	ui := make([]data.UserInfo, 0)
+
+	for result.Next() {
+		r := Row{}
+		err := result.StructScan(&r)
+
+		if err != nil {
+			return nil, fmt.Errorf("%w : %s", data.ErrSql, err)
+		}
+
+		ui = append(ui, data.UserInfo{Username: r.Username, IsAdmin: r.IsAdmin})
+	}
+
+	return ui, nil
+}
+
 // SelectUserLogin fetches the id,username,is_admin,password_hash of a user by his username in the database. Returns a
 // data.ErrSql if it fails.
 func (ds *DataBase) SelectUserLogin(username string) (data.User, error) {

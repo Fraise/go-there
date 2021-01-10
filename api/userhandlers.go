@@ -83,6 +83,8 @@ func getCreateHandler(ds DataSourcer) func(c *gin.Context) {
 	}
 }
 
+// getUserHandler returns a gin handler which select an user in the datasource or return http.StatusNotFound if the user
+// does not exist
 func getUserHandler(ds DataSourcer) func(c *gin.Context) {
 	return func(c *gin.Context) {
 		u, err := ds.SelectUser(c.Param("user"))
@@ -93,13 +95,16 @@ func getUserHandler(ds DataSourcer) func(c *gin.Context) {
 			return
 		}
 
-		// TODO return 404 if user not found
+		if u.Username == "" {
+			c.Status(http.StatusNotFound)
+			return
+		}
 
-		// Clean the data before responding to the request
 		c.JSON(http.StatusOK, u)
 	}
 }
 
+// getUserHandler returns a gin handler which delete an user in the datasource.
 func getDeleteUserHandler(ds DataSourcer) func(c *gin.Context) {
 	return func(c *gin.Context) {
 		err := ds.DeleteUser(c.Param("user"))
@@ -114,6 +119,7 @@ func getDeleteUserHandler(ds DataSourcer) func(c *gin.Context) {
 	}
 }
 
+// getUpdateUserHandler returns a gin handler which updates an user in the datasource from the request body.
 func getUpdateUserHandler(ds DataSourcer) func(c *gin.Context) {
 	return func(c *gin.Context) {
 		pu := data.PatchUser{}
@@ -181,5 +187,20 @@ func getUpdateUserHandler(ds DataSourcer) func(c *gin.Context) {
 		}
 
 		c.JSON(http.StatusOK, ar)
+	}
+}
+
+// getUserList returns a gin handler which fetch the list of all users in the datasource.
+func getUserList(ds DataSourcer) func(c *gin.Context) {
+	return func(c *gin.Context) {
+		users, err := ds.SelectAllUsers()
+
+		if err != nil {
+			c.AbortWithStatus(http.StatusInternalServerError)
+			_ = c.Error(err)
+			return
+		}
+
+		c.JSON(http.StatusOK, users)
 	}
 }

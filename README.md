@@ -88,6 +88,8 @@ The available configuration groups are :
 
 `manage_users` represents the user management endpoint: `GET`, `DELETE` and `PATCH` on */api/:user*
 
+`get_user_list` represents the user list endpoint: `GET` on */api/users*
+
 `go` represents the redirection endpoint: `GET` on */go/:path*
 
 `manage_path` represents the path management endpoint: `POST` and `DELETE` on */api/:path*

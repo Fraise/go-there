@@ -11,6 +11,7 @@ import (
 // DataSourcer represents the database.DataSource methods needed by the api package to access the data.
 type DataSourcer interface {
 	SelectUser(username string) (data.UserInfo, error)
+	SelectAllUsers() ([]data.UserInfo, error)
 	SelectUserLogin(username string) (data.User, error)
 	SelectApiKeyHashByUser(username string) ([]byte, error)
 	SelectUserLoginByApiKeySalt(apiKeySalt string) (data.User, error)
@@ -45,7 +46,7 @@ func Init(conf *config.Configuration, e *gin.Engine, ds DataSourcer) {
 
 	ep = conf.Endpoints["create_users"]
 	if ep.Enabled {
-		// Init /api/users route
+		// Init /api/users route, POST new user
 		userRoute := e.Group("/api/users")
 
 		if ep.Log {
@@ -58,6 +59,23 @@ func Init(conf *config.Configuration, e *gin.Engine, ds DataSourcer) {
 		}
 
 		userRoute.POST("", getCreateHandler(ds))
+	}
+
+	ep = conf.Endpoints["get_user_list"]
+	if ep.Enabled {
+		// Init /api/users route, GET all users
+		userRoute := e.Group("/api/users")
+
+		if ep.Log {
+			userRoute.Use(logging.GetLoggingMiddleware())
+		}
+
+		if ep.Auth {
+			userRoute.Use(auth.GetAuthMiddleware(ds))
+			userRoute.Use(auth.GetPermissionsMiddleware(ep.AdminOnly))
+		}
+
+		userRoute.GET("", getUserList(ds))
 	}
 
 	ep = conf.Endpoints["manage_paths"]

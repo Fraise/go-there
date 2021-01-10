@@ -53,6 +53,17 @@ paths:
           description: "Invalid input/User already exists"
           schema:
             $ref: "#/definitions/Error"
+    get:
+      tags:
+        - "users"
+      summary: "Get the list of all users"
+      description: ""
+      operationId: "getAllUsers"
+      responses:
+        "200":
+          description: "Returns the generated API key"
+          schema:
+            $ref: "#/definitions/PartialUserInfoList"
   /api/users/{user}:
     get:
       tags:
@@ -198,6 +209,19 @@ definitions:
         type: "array"
         items:
           $ref: "#/definitions/Path"
+  PartialUserInfoList:
+    type: "array"
+    items:
+      $ref: "#/definitions/PartialUserInfo"
+  PartialUserInfo:
+    type: "object"
+    properties:
+      username:
+        type: "string"
+        example: "alice"
+      is_admin:
+        type: "boolean"
+        example: false
   ApiKey:
     type: "object"
     properties:
