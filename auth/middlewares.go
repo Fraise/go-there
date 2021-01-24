@@ -15,11 +15,37 @@ func GetAuthMiddleware(ds DataSourcer) func(c *gin.Context) {
 	return func(c *gin.Context) {
 		var l data.Login
 		var hl data.HeaderLogin
+		var t data.AuthToken
 
 		// Tries to bind authentication header first
 		if err := c.ShouldBindHeader(&hl); err != nil {
 			c.AbortWithStatus(http.StatusBadRequest)
 			return
+		}
+
+		if hl.XAuthToken != "" {
+			var err error
+			// If the header contains a session token, do not bind the other fields
+			t, err = ds.GetAuthToken(hl.XAuthToken)
+
+			if err != nil {
+				c.AbortWithStatus(http.StatusInternalServerError)
+				_ = c.Error(err)
+				return
+			}
+
+			// TODO validate token
+
+			// The keys map is only initialized if a call to ShouldBindBody is made
+			c.Keys = make(map[string]interface{})
+
+			// Keep track of the user if he successfully authenticated
+			c.Keys["user"] = data.User{
+				Username: t.Username,
+			}
+			c.Keys["logUser"] = t.Username
+			// Keep track of which user data we want to access
+			c.Keys["reqUser"] = c.Param("user")
 		}
 
 		if hl.XApiKey != "" {

@@ -99,6 +99,22 @@ func (mockDataSourcer) DeletePath(path data.Path) error {
 	return nil
 }
 
+func (mockDataSourcer) GetAuthToken(token string) (data.AuthToken, error) {
+	return data.AuthToken{}, nil
+}
+
+func (mockDataSourcer) DeleteAuthToken(authToken data.AuthToken) error {
+	return nil
+}
+
+func (mockDataSourcer) GetAuthTokenByUser(username string) (data.AuthToken, error) {
+	return data.AuthToken{}, nil
+}
+
+func (mockDataSourcer) InsertAuthToken(authToken data.AuthToken) error {
+	return nil
+}
+
 func Test_getPostPathHandler(t *testing.T) {
 	type resp struct {
 		code int

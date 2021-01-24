@@ -143,3 +143,25 @@ func (ds *DataSource) DeletePath(path data.Path) error {
 
 	return ds.DataBase.DeletePath(path)
 }
+
+// InsertAuthToken inserts an authentication token in the database. Returns a data.ErrSql if it fails.
+func (ds *DataSource) InsertAuthToken(authToken data.AuthToken) error {
+	return ds.DataBase.InsertAuthToken(authToken)
+}
+
+// GetAuthToken gets an authorization token in the database from a token string. Returns a data.ErrSqlNoRow if it
+// doesn't exist or data.ErrSql if it fails.
+func (ds *DataSource) GetAuthToken(token string) (data.AuthToken, error) {
+	return ds.DataBase.GetAuthToken(token)
+}
+
+// GetAuthTokenByUser gets an authorization token in the database from a token string. Returns a data.ErrSqlNoRow if it
+// doesn't exist or data.ErrSql if it fails.
+func (ds *DataSource) GetAuthTokenByUser(username string) (data.AuthToken, error) {
+	return ds.DataBase.GetAuthTokenByUser(username)
+}
+
+// DeletePath deletes a data.AuthToken in the database. Returns a data.ErrSql if it fails.
+func (ds *DataSource) DeleteAuthToken(authToken data.AuthToken) error {
+	return ds.DataBase.DeleteAuthToken(authToken)
+}

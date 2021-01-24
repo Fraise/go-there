@@ -15,6 +15,7 @@ const bCryptCost = bcrypt.DefaultCost
 type DataSourcer interface {
 	SelectUserLogin(username string) (data.User, error)
 	SelectUserLoginByApiKeyHash(apiKeyHash string) (data.User, error)
+	GetAuthToken(token string) (data.AuthToken, error)
 }
 
 // GetHashFromPassword takes a password, and returns (complete bcrypt hash, error).

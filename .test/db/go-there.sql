@@ -23,10 +23,11 @@ CREATE TABLE `go` (
 
 CREATE TABLE `token` (
     `token` varchar(64) DEFAULT NULL,
-    `expiration` text DEFAULT NULL,
-    `user_id` int,
+    `expiration_ts` TIMESTAMP DEFAULT NULL,
+    `username` varchar(255),
     INDEX (token),
-    FOREIGN KEY (user_id)
-        REFERENCES users (id)
+    UNIQUE (token),
+    FOREIGN KEY (username)
+        REFERENCES users (username)
         ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;

@@ -21,6 +21,10 @@ type DataSourcer interface {
 	UpdateUserApiKey(user data.User) error
 	InsertPath(path data.Path) error
 	DeletePath(path data.Path) error
+	InsertAuthToken(authToken data.AuthToken) error
+	GetAuthToken(token string) (data.AuthToken, error)
+	GetAuthTokenByUser(username string) (data.AuthToken, error)
+	DeleteAuthToken(authToken data.AuthToken) error
 }
 
 // Init initializes the API paths from the provided configuration and add them to the *gin.Engine.

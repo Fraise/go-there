@@ -45,6 +45,10 @@ func (mockDataSourcer) SelectUserLoginByApiKeyHash(apiKeyHash string) (data.User
 	return data.User{}, nil
 }
 
+func (mockDataSourcer) GetAuthToken(token string) (data.AuthToken, error) {
+	return data.AuthToken{}, nil
+}
+
 func TestGetAuthMiddleware(t *testing.T) {
 	type resp struct {
 		code int
