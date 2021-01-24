@@ -24,8 +24,7 @@ func getCreateHandler(ds DataSourcer) func(c *gin.Context) {
 			return
 		}
 
-		// We don't need to store the salt section individually for a password
-		hash, _, err := auth.GetHashFromPassword(cu.CreatePassword)
+		hash, err := auth.GetHashFromPassword(cu.CreatePassword)
 
 		if err != nil {
 			c.AbortWithStatus(http.StatusInternalServerError)
@@ -43,7 +42,7 @@ func getCreateHandler(ds DataSourcer) func(c *gin.Context) {
 		}
 
 		// Get its corresponding hash and salt
-		apiKeyHash, apiKeySalt, err := auth.GetHashFromPassword(apiKey)
+		apiKeyHash, err := auth.GetHashFromPassword(apiKey)
 
 		if err != nil {
 			c.AbortWithStatus(http.StatusInternalServerError)
@@ -55,7 +54,6 @@ func getCreateHandler(ds DataSourcer) func(c *gin.Context) {
 			Username:     cu.CreateUser,
 			IsAdmin:      false,
 			PasswordHash: hash,
-			ApiKeySalt:   apiKeySalt,
 			ApiKeyHash:   apiKeyHash,
 		}
 
@@ -64,7 +62,6 @@ func getCreateHandler(ds DataSourcer) func(c *gin.Context) {
 		if err != nil {
 			switch {
 			case errors.Is(err, data.ErrSqlDuplicateRow):
-				// TODO handle duplicate salt
 				c.AbortWithStatusJSON(http.StatusBadRequest, data.ErrorResponse{Error: "user already exists"})
 				return
 			default:
@@ -78,7 +75,7 @@ func getCreateHandler(ds DataSourcer) func(c *gin.Context) {
 			http.StatusOK,
 			data.ApiKeyResponse{
 				// TODO clean that up
-				ApiKey: base64.URLEncoding.EncodeToString(append(apiKeySalt, []byte(":"+apiKey)...)),
+				ApiKey: base64.URLEncoding.EncodeToString(append(apiKeyHash, []byte(":"+apiKey)...)),
 			})
 	}
 }
@@ -135,8 +132,7 @@ func getUpdateUserHandler(ds DataSourcer) func(c *gin.Context) {
 		ar := data.ApiKeyResponse{}
 
 		if pu.PatchPassword != "" {
-			// We don't need to store the salt for a password
-			hash, _, err := auth.GetHashFromPassword(pu.PatchPassword)
+			hash, err := auth.GetHashFromPassword(pu.PatchPassword)
 
 			if err != nil {
 				c.AbortWithStatus(http.StatusInternalServerError)
@@ -164,7 +160,7 @@ func getUpdateUserHandler(ds DataSourcer) func(c *gin.Context) {
 				return
 			}
 
-			apiKeyHash, apiKeySalt, err := auth.GetHashFromPassword(apiKey)
+			apiKeyHash, err := auth.GetHashFromPassword(apiKey)
 
 			if err != nil {
 				c.AbortWithStatus(http.StatusInternalServerError)
@@ -173,7 +169,6 @@ func getUpdateUserHandler(ds DataSourcer) func(c *gin.Context) {
 			}
 
 			u.ApiKeyHash = apiKeyHash
-			u.ApiKeySalt = apiKeySalt
 
 			err = ds.UpdateUserApiKey(u)
 

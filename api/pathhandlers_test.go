@@ -40,8 +40,8 @@ func (mockDataSourcer) SelectApiKeyHashByUser(username string) ([]byte, error) {
 	return []byte{}, nil
 }
 
-func (mockDataSourcer) SelectUserLoginByApiKeySalt(apiKeySalt string) (data.User, error) {
-	switch apiKeySalt {
+func (mockDataSourcer) SelectUserLoginByApiKeyHash(apiKeyHash string) (data.User, error) {
+	switch apiKeyHash {
 	}
 
 	return data.User{}, nil

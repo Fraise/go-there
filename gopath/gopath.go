@@ -11,7 +11,7 @@ import (
 // DataSourcer represents the database.DataSource methods needed by the gopath package to access the data.
 type DataSourcer interface {
 	SelectUserLogin(username string) (data.User, error)
-	SelectUserLoginByApiKeySalt(apiKeySalt string) (data.User, error)
+	SelectUserLoginByApiKeyHash(apiKeyHash string) (data.User, error)
 	GetTarget(path string) (string, error)
 }
 

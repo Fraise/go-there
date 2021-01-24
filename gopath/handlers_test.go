@@ -18,7 +18,7 @@ func (mockDataSourcer) SelectUserLogin(username string) (data.User, error) {
 	return data.User{}, nil
 }
 
-func (mockDataSourcer) SelectUserLoginByApiKeySalt(apiKeySalt string) (data.User, error) {
+func (mockDataSourcer) SelectUserLoginByApiKeyHash(apiKeyHash string) (data.User, error) {
 	return data.User{}, nil
 }
 

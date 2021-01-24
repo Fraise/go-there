@@ -4,16 +4,28 @@ CREATE TABLE `users` (
     `is_admin` tinyint(1) DEFAULT 0,
     `password_hash` varchar(255) DEFAULT NULL,
     `api_key_hash` varchar(255) DEFAULT NULL,
-    `api_key_salt` varchar(30) DEFAULT NULL,
-    UNIQUE KEY `users_api_key_salt_uindex` (`api_key_salt`),
-    UNIQUE KEY `users_username_uindex` (`username`) USING HASH
+    INDEX (username),
+    INDEX (password_hash),
+    UNIQUE (`username`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 
 CREATE TABLE `go` (
-    `path` text DEFAULT NULL,
+    `path` varchar(255) DEFAULT NULL,
     `target` text DEFAULT NULL,
     `user_id` int,
+    INDEX (path),
+    FOREIGN KEY (user_id)
+        REFERENCES users (id)
+        ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+
+CREATE TABLE `token` (
+    `token` varchar(64) DEFAULT NULL,
+    `expiration` text DEFAULT NULL,
+    `user_id` int,
+    INDEX (token),
     FOREIGN KEY (user_id)
         REFERENCES users (id)
         ON DELETE CASCADE

@@ -14,25 +14,18 @@ const bCryptCost = bcrypt.DefaultCost
 // DataSourcer is used to access the mysql database.
 type DataSourcer interface {
 	SelectUserLogin(username string) (data.User, error)
-	SelectUserLoginByApiKeySalt(apiKeySalt string) (data.User, error)
+	SelectUserLoginByApiKeyHash(apiKeyHash string) (data.User, error)
 }
 
-// GetHashFromPassword takes a password, and returns (complete bcrypt hash, salt only, error).
-func GetHashFromPassword(password string) ([]byte, []byte, error) {
+// GetHashFromPassword takes a password, and returns (complete bcrypt hash, error).
+func GetHashFromPassword(password string) ([]byte, error) {
 	hash, err := bcrypt.GenerateFromPassword([]byte(password), bCryptCost)
 
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
-	hashArr := bytes.Split(hash, []byte("$"))
-
-	// 0 = ""
-	// 1 = Algorithm
-	// 2 = Cost
-	// 3 = Salt+Hash, the salt should be 22 bytes long and hash 31 bytes long
-
-	return hash, hashArr[3][:22], nil
+	return hash, nil
 }
 
 // GenerateRandomB64String creates a random base64 URL encoded string from using the crypto/rand package from a byte
@@ -81,7 +74,7 @@ func GetRequestedUser(c *gin.Context) string {
 	return u
 }
 
-// validateApiKey takes an api key with the salt encoded in b64 and returns (salt, apikey, error).
+// validateApiKey takes an api key with the hash encoded in b64 and returns (hash, apikey, error).
 func validateApiKey(apiKey string) ([]byte, []byte, error) {
 	decodedKey, err := base64.URLEncoding.DecodeString(apiKey)
 

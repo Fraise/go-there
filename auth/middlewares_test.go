@@ -20,7 +20,6 @@ func (mockDataSourcer) SelectUserLogin(username string) (data.User, error) {
 			Username:     "alice",
 			IsAdmin:      false,
 			PasswordHash: []byte("$2a$10$5vUiFPUJJoSyIdCIhn1/n.0yxyhaHjR2L3qS1JKBh1x2UOWd2cEqi"),
-			ApiKeySalt:   []byte(".KgKwnN06VxwTwt4zyVYRu"),
 			ApiKeyHash:   []byte("$2a$10$.KgKwnN06VxwTwt4zyVYRuTTeQPGQ2/5HMIEa/oNZUSH/WmTJFlwO"),
 		}, nil
 	case "aliceErr":
@@ -32,14 +31,13 @@ func (mockDataSourcer) SelectUserLogin(username string) (data.User, error) {
 	return data.User{}, nil
 }
 
-func (mockDataSourcer) SelectUserLoginByApiKeySalt(apiKeySalt string) (data.User, error) {
-	switch apiKeySalt {
+func (mockDataSourcer) SelectUserLoginByApiKeyHash(apiKeyHash string) (data.User, error) {
+	switch apiKeyHash {
 	case ".KgKwnN06VxwTwt4zyVYRu":
 		return data.User{
 			Username:     "alice",
 			IsAdmin:      false,
 			PasswordHash: []byte("$2a$10$5vUiFPUJJoSyIdCIhn1/n.0yxyhaHjR2L3qS1JKBh1x2UOWd2cEqi"),
-			ApiKeySalt:   []byte(".KgKwnN06VxwTwt4zyVYRu"),
 			ApiKeyHash:   []byte("$2a$10$.KgKwnN06VxwTwt4zyVYRuTTeQPGQ2/5HMIEa/oNZUSH/WmTJFlwO"),
 		}, nil
 	}

@@ -44,17 +44,12 @@ func (ds *DataSource) SelectApiKeyHashByUser(username string) ([]byte, error) {
 	return ds.DataBase.SelectApiKeyHashByUser(username)
 }
 
-// SelectUserLoginByApiKeySalt fetches the id,username,is_admin,api_key_hash of a user, by his API key salt.
-func (ds *DataSource) SelectUserLoginByApiKeySalt(apiKeySalt string) (data.User, error) {
-	return ds.DataBase.SelectUserLoginByApiKeySalt(apiKeySalt)
+// SelectUserLoginByApiKeyHash fetches the id,username,is_admin,api_key_hash of a user, by his API key hash.
+func (ds *DataSource) SelectUserLoginByApiKeyHash(apiKeyHash string) (data.User, error) {
+	return ds.DataBase.SelectUserLoginByApiKeyHash(apiKeyHash)
 }
 
-// SelectApiKeyHashBySalt fetches the full API key hash by its salt. Returns a data.ErrSql if it fails.
-func (ds *DataSource) SelectApiKeyHashBySalt(apiKeySalt string) ([]byte, error) {
-	return ds.DataBase.SelectApiKeyHashBySalt(apiKeySalt)
-}
-
-// InsertUser tries to add a new user to the database. If a user with the same name or API key salt exists,
+// InsertUser tries to add a new user to the database. If a user with the same name or API key hash exists,
 // data.ErrSqlDuplicateRow is returned.
 func (ds *DataSource) InsertUser(user data.User) error {
 	return ds.DataBase.InsertUser(user)

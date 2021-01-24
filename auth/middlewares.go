@@ -40,14 +40,14 @@ func GetAuthMiddleware(ds DataSourcer) func(c *gin.Context) {
 
 		if l.ApiKey != "" {
 			// If we receive an api key
-			salt, ak, err := validateApiKey(l.ApiKey)
+			hash, ak, err := validateApiKey(l.ApiKey)
 
 			if err != nil {
 				c.AbortWithStatus(http.StatusBadRequest)
 				return
 			}
 
-			u, err := ds.SelectUserLoginByApiKeySalt(string(salt))
+			u, err := ds.SelectUserLoginByApiKeyHash(string(hash))
 
 			if err != nil {
 				c.AbortWithStatus(http.StatusInternalServerError)

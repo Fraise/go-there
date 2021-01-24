@@ -7,7 +7,6 @@ type User struct {
 	Username     string `db:"username" json:"username"`
 	IsAdmin      bool   `db:"is_admin" json:"is_admin"`
 	PasswordHash []byte `db:"password_hash" json:"password_hash,omitempty"`
-	ApiKeySalt   []byte `db:"api_key_salt" json:"api_key_salt,omitempty"`
 	ApiKeyHash   []byte `db:"api_key_hash" json:"api_key_hash,omitempty"`
 }
 

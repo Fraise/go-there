@@ -173,10 +173,10 @@ func (ds *DataBase) SelectApiKeyHashByUser(username string) ([]byte, error) {
 	return ak, nil
 }
 
-// SelectUserLoginByApiKeySalt fetches the id,username,is_admin,api_key_hash of a user, by his API key salt.
-func (ds *DataBase) SelectUserLoginByApiKeySalt(apiKeySalt string) (data.User, error) {
+// SelectUserLoginByApiKeyHash fetches the id,username,is_admin of a user, by his API key hash.
+func (ds *DataBase) SelectUserLoginByApiKeyHash(apiKeyHash string) (data.User, error) {
 	u := data.User{}
-	err := ds.db.Get(&u, ds.db.Rebind("SELECT id,username,is_admin,api_key_hash FROM users WHERE api_key_salt=?"), apiKeySalt)
+	err := ds.db.Get(&u, ds.db.Rebind("SELECT id,username,is_admin,api_key_hash FROM users WHERE api_key_hash=?"), apiKeyHash)
 
 	if err != nil {
 		return data.User{}, fmt.Errorf("%w : %s", data.ErrSql, err)
@@ -185,24 +185,12 @@ func (ds *DataBase) SelectUserLoginByApiKeySalt(apiKeySalt string) (data.User, e
 	return u, nil
 }
 
-// SelectApiKeyHashBySalt fetches the full API key hash by its salt. Returns a data.ErrSql if it fails.
-func (ds *DataBase) SelectApiKeyHashBySalt(apiKeySalt string) ([]byte, error) {
-	ak := make([]byte, 0)
-	err := ds.db.Get(&ak, ds.db.Rebind("SELECT api_key_hash FROM users WHERE api_key_salt=?"), apiKeySalt)
-
-	if err != nil {
-		return []byte{}, fmt.Errorf("%w : %s", data.ErrSql, err)
-	}
-
-	return ak, nil
-}
-
-// InsertUser tries to add a new user to the database. If a user with the same name or API key salt exists,
+// InsertUser tries to add a new user to the database. If a user with the same name exists,
 // data.ErrSqlDuplicateRow is returned.
 func (ds *DataBase) InsertUser(user data.User) error {
 	_, err := ds.db.NamedExec(
-		"INSERT INTO users (username,is_admin,password_hash,api_key_salt,api_key_hash) "+
-			"VALUES (:username,:is_admin,:password_hash,:api_key_salt,:api_key_hash)", user)
+		"INSERT INTO users (username,is_admin,password_hash,api_key_hash) "+
+			"VALUES (:username,:is_admin,:password_hash,:api_key_hash)", user)
 
 	if err != nil {
 		if e, ok := err.(*mysql.MySQLError); ok {
@@ -231,7 +219,7 @@ func (ds *DataBase) UpdateUserPassword(user data.User) error {
 
 // UpdateUserPassword updates an user's API key in the database. Returns a data.ErrSql if it fails.
 func (ds *DataBase) UpdateUserApiKey(user data.User) error {
-	_, err := ds.db.NamedExec("UPDATE users SET api_key_hash=:api_key_hash,api_key_salt=:api_key_salt WHERE username=:username", user)
+	_, err := ds.db.NamedExec("UPDATE users SET api_key_hash=:api_key_hash WHERE username=:username", user)
 
 	if err != nil {
 		return fmt.Errorf("%w : %s", data.ErrSql, err)

@@ -14,7 +14,7 @@ type DataSourcer interface {
 	SelectAllUsers() ([]data.UserInfo, error)
 	SelectUserLogin(username string) (data.User, error)
 	SelectApiKeyHashByUser(username string) ([]byte, error)
-	SelectUserLoginByApiKeySalt(apiKeySalt string) (data.User, error)
+	SelectUserLoginByApiKeyHash(apiKeyHash string) (data.User, error)
 	InsertUser(user data.User) error
 	DeleteUser(username string) error
 	UpdateUserPassword(user data.User) error
