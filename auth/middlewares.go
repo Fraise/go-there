@@ -1,11 +1,13 @@
 package auth
 
 import (
+	"errors"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 	"go-there/data"
 	"golang.org/x/crypto/bcrypt"
 	"net/http"
+	"time"
 )
 
 // GetAuthMiddleware returns a gin middleware used for authentication. This middleware first tries to bind either a
@@ -29,23 +31,49 @@ func GetAuthMiddleware(ds DataSourcer) func(c *gin.Context) {
 			t, err = ds.GetAuthToken(hl.XAuthToken)
 
 			if err != nil {
+				switch {
+				case errors.Is(err, data.ErrSqlNoRow):
+					c.AbortWithStatus(http.StatusUnauthorized)
+					return
+				default:
+					c.AbortWithStatus(http.StatusInternalServerError)
+					_ = c.Error(err)
+					return
+				}
+			}
+
+			if t.ExpirationTS < time.Now().Unix() {
+				c.AbortWithStatusJSON(http.StatusUnauthorized, data.ErrorResponse{Error: "token expired"})
+			} else if t.ExpirationTS < time.Now().Unix()+604800 {
+				// If the expiration date if in less than 1 week, renew it
+				t.ExpirationTS = time.Now().Unix()
+
+				err := ds.UpdateAuthToken(t)
+
+				// This can fail silently for the user, but it still needs to be reported to the system
+				if err != nil {
+					_ = c.Error(err)
+				}
+			}
+
+			u, err := ds.SelectUserLogin(t.Username)
+
+			if err != nil {
 				c.AbortWithStatus(http.StatusInternalServerError)
 				_ = c.Error(err)
 				return
 			}
 
-			// TODO validate token
-
 			// The keys map is only initialized if a call to ShouldBindBody is made
 			c.Keys = make(map[string]interface{})
 
 			// Keep track of the user if he successfully authenticated
-			c.Keys["user"] = data.User{
-				Username: t.Username,
-			}
+			c.Keys["user"] = u
 			c.Keys["logUser"] = t.Username
 			// Keep track of which user data we want to access
 			c.Keys["reqUser"] = c.Param("user")
+
+			return
 		}
 
 		if hl.XApiKey != "" {
@@ -83,6 +111,7 @@ func GetAuthMiddleware(ds DataSourcer) func(c *gin.Context) {
 
 			if u.Username == "" {
 				c.AbortWithStatus(http.StatusUnauthorized)
+				return
 			}
 
 			err = bcrypt.CompareHashAndPassword(u.ApiKeyHash, ak)

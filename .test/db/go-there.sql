@@ -22,8 +22,8 @@ CREATE TABLE `go` (
 
 
 CREATE TABLE `token` (
-    `token` varchar(64) DEFAULT NULL,
-    `expiration_ts` TIMESTAMP DEFAULT NULL,
+    `token` varchar(255) DEFAULT NULL,
+    `expiration_ts` int DEFAULT NULL,
     `username` varchar(255),
     INDEX (token),
     UNIQUE (token),

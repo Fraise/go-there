@@ -39,6 +39,10 @@ func (mockDataSourcer) GetAuthToken(token string) (data.AuthToken, error) {
 	return data.AuthToken{}, nil
 }
 
+func (mockDataSourcer) UpdateAuthToken(authToken data.AuthToken) error {
+	return nil
+}
+
 func Test_getPathHandler(t *testing.T) {
 	type resp struct {
 		code int

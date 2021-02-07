@@ -103,6 +103,10 @@ func (mockDataSourcer) GetAuthToken(token string) (data.AuthToken, error) {
 	return data.AuthToken{}, nil
 }
 
+func (mockDataSourcer) UpdateAuthToken(authToken data.AuthToken) error {
+	return nil
+}
+
 func (mockDataSourcer) DeleteAuthToken(authToken data.AuthToken) error {
 	return nil
 }

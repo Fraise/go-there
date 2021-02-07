@@ -8,6 +8,9 @@ import (
 	"go-there/logging"
 )
 
+const authTokenLength = 128
+const authTokenExpiration = 30 * 24 * 3600 // TODO make it configurable
+
 // DataSourcer represents the database.DataSource methods needed by the api package to access the data.
 type DataSourcer interface {
 	SelectUser(username string) (data.UserInfo, error)
@@ -22,6 +25,7 @@ type DataSourcer interface {
 	InsertPath(path data.Path) error
 	DeletePath(path data.Path) error
 	InsertAuthToken(authToken data.AuthToken) error
+	UpdateAuthToken(authToken data.AuthToken) error
 	GetAuthToken(token string) (data.AuthToken, error)
 	GetAuthTokenByUser(username string) (data.AuthToken, error)
 	DeleteAuthToken(authToken data.AuthToken) error
@@ -98,5 +102,23 @@ func Init(conf *config.Configuration, e *gin.Engine, ds DataSourcer) {
 
 		path.POST("", getPostPathHandler(ds))
 		path.DELETE("", getDeletePathHandler(ds))
+	}
+
+	ep = conf.Endpoints["auth_token"]
+	if ep.Enabled {
+		// Init /api/auth route
+		path := e.Group("/api/auth")
+
+		if ep.Log {
+			path.Use(logging.GetLoggingMiddleware())
+		}
+
+		if ep.Auth {
+			path.Use(auth.GetAuthMiddleware(ds))
+			path.Use(auth.GetPermissionsMiddleware(ep.AdminOnly))
+		}
+
+		path.GET("", getAuthTokenHandler(ds))
+		path.DELETE("", getDeleteAuthTokenHandler(ds))
 	}
 }

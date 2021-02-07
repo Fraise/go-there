@@ -66,6 +66,7 @@ func (ds *DataSource) UpdateUserApiKey(user data.User) error {
 }
 
 // DeleteUser deletes a user in the database by his username. Returns a data.ErrSql if it fails.
+// Logs a warning if a cache related error happens.
 func (ds *DataSource) DeleteUser(username string) error {
 	ui, err := ds.DataBase.SelectUser(username)
 
@@ -90,6 +91,7 @@ func (ds *DataSource) DeleteUser(username string) error {
 
 // GetTarget tries to get a target from the cache, then from the database on a miss. Returns a data.ErrSqlNoRow if the
 // target doesn't exist or data.ErrSql if it fails. The target is immediately added to the cache on a miss.
+// Logs a warning if a cache related error happens.
 func (ds *DataSource) GetTarget(path string) (string, error) {
 	t, err := ds.Cache.GetTarget(path)
 
@@ -122,6 +124,7 @@ func (ds *DataSource) GetTarget(path string) (string, error) {
 
 // InsertPath adds a data.Path to the cache, then to the database. Returns a data.ErrSqlDuplicateRow if the path already
 // exists or data.ErrSql if the operation fails.
+// Logs a warning if a cache related error happens.
 func (ds *DataSource) InsertPath(path data.Path) error {
 	err := ds.Cache.AddTarget(path)
 
@@ -134,6 +137,7 @@ func (ds *DataSource) InsertPath(path data.Path) error {
 
 // DeletePath removes a data.Path from the cache, then deletes it in the database. Logs a warning if the cache returns
 // an error, returns a data.ErrSql if the operation fails.
+// Logs a warning if a cache related error happens.
 func (ds *DataSource) DeletePath(path data.Path) error {
 	err := ds.Cache.DeleteTargets([]string{path.Path})
 
@@ -144,15 +148,66 @@ func (ds *DataSource) DeletePath(path data.Path) error {
 	return ds.DataBase.DeletePath(path)
 }
 
-// InsertAuthToken inserts an authentication token in the database. Returns a data.ErrSql if it fails.
+// InsertAuthToken inserts an authentication token in the database and the cache. Returns a data.ErrSql if it fails.
+// Logs a warning if a cache related error happens.
 func (ds *DataSource) InsertAuthToken(authToken data.AuthToken) error {
-	return ds.DataBase.InsertAuthToken(authToken)
+	err := ds.DataBase.InsertAuthToken(authToken)
+
+	if err != nil {
+		return err
+	}
+
+	if err := ds.Cache.AddAuthToken(authToken); err != nil {
+		log.Warn().Err(err).Msg("error updating auth token in cache")
+	}
+
+	return nil
+}
+
+// UpdateAuthToken updates an authentication token in the database. Returns a data.ErrSql if it fails.
+// Logs a warning if a cache related error happens.
+func (ds *DataSource) UpdateAuthToken(authToken data.AuthToken) error {
+	err := ds.DataBase.UpdateAuthToken(authToken)
+
+	if err != nil {
+		return err
+	}
+
+	if err := ds.Cache.AddAuthToken(authToken); err != nil {
+		log.Warn().Err(err).Msg("error updating auth token in cache")
+	}
+
+	return nil
 }
 
 // GetAuthToken gets an authorization token in the database from a token string. Returns a data.ErrSqlNoRow if it
 // doesn't exist or data.ErrSql if it fails.
+// Logs a warning if a cache related error happens.
 func (ds *DataSource) GetAuthToken(token string) (data.AuthToken, error) {
-	return ds.DataBase.GetAuthToken(token)
+	t, err := ds.Cache.GetAuthToken(token)
+
+	if err != nil {
+		log.Warn().Err(err).Msg("error getting auth token in cache")
+	}
+
+	if t.Token != "" {
+		return t, nil
+	}
+
+	t, err = ds.DataBase.GetAuthToken(token)
+
+	if err != nil {
+		return t, err
+	}
+
+	// On cache miss
+	err = ds.Cache.AddAuthToken(t)
+
+	if err != nil {
+		log.Warn().Err(err).Msg("error inserting path in cache")
+	}
+
+	return t, nil
 }
 
 // GetAuthTokenByUser gets an authorization token in the database from a token string. Returns a data.ErrSqlNoRow if it
@@ -162,6 +217,21 @@ func (ds *DataSource) GetAuthTokenByUser(username string) (data.AuthToken, error
 }
 
 // DeletePath deletes a data.AuthToken in the database. Returns a data.ErrSql if it fails.
+// Logs a warning if a cache related error happens.
 func (ds *DataSource) DeleteAuthToken(authToken data.AuthToken) error {
+	// For now the passed auth token only contains a user, so we need to fetch it from the DB first to be able to
+	// remove it from the cache
+	t, err := ds.DataBase.GetAuthTokenByUser(authToken.Username)
+
+	if err != nil {
+		return err
+	}
+
+	err = ds.Cache.DeleteAuthToken(t.Token)
+
+	if err != nil {
+		log.Warn().Err(err).Msg("error deleting auth token in cache")
+	}
+
 	return ds.DataBase.DeleteAuthToken(authToken)
 }

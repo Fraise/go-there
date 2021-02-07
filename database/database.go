@@ -298,11 +298,22 @@ func (ds *DataBase) InsertAuthToken(authToken data.AuthToken) error {
 	return nil
 }
 
+// UpdateAuthToken inserts an authentication token in the database. Returns a data.ErrSql if it fails.
+func (ds *DataBase) UpdateAuthToken(authToken data.AuthToken) error {
+	_, err := ds.db.NamedExec("UPDATE token SET token=:token,expiration_ts=:expiration_ts WHERE token=:token", authToken)
+
+	if err != nil {
+		return fmt.Errorf("%w : %s", data.ErrSql, err)
+	}
+
+	return nil
+}
+
 // GetAuthToken gets an authorization token in the database from a token string. Returns a data.ErrSqlNoRow if it
 // doesn't exist or data.ErrSql if it fails.
 func (ds *DataBase) GetAuthToken(token string) (data.AuthToken, error) {
 	t := data.AuthToken{}
-	err := ds.db.Get(&t, ds.db.Rebind("SELECT (token,expiration_ts) FROM token WHERE token=?"), token)
+	err := ds.db.Get(&t, ds.db.Rebind("SELECT * FROM token WHERE token=?"), token)
 
 	if err != nil {
 		switch {

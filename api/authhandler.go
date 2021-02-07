@@ -33,7 +33,7 @@ func getAuthTokenHandler(ds DataSourcer) func(c *gin.Context) {
 
 		// If the token does not exist, generate one
 		if token.Token == "" {
-			token.Token, err = auth.GenerateRandomB64String(32)
+			token.Token, err = auth.GenerateRandomB64String(authTokenLength)
 
 			if err != nil {
 				c.AbortWithStatus(http.StatusInternalServerError)
@@ -41,11 +41,29 @@ func getAuthTokenHandler(ds DataSourcer) func(c *gin.Context) {
 				return
 			}
 
-			// TODO make it configurable
-			token.ExpirationTS = time.Now().Unix() + 30*24*3600 // 30 days
+			token.ExpirationTS = time.Now().Unix() + authTokenExpiration
 			token.Username = u.Username
 
 			err = ds.InsertAuthToken(token)
+
+			if err != nil {
+				c.AbortWithStatus(http.StatusInternalServerError)
+				_ = c.Error(err)
+				return
+			}
+		} else if token.ExpirationTS < time.Now().Unix() {
+			// If the token is expired, generate a new one and update the DB entry
+			token.Token, err = auth.GenerateRandomB64String(authTokenLength)
+
+			if err != nil {
+				c.AbortWithStatus(http.StatusInternalServerError)
+				_ = c.Error(err)
+				return
+			}
+
+			token.ExpirationTS = time.Now().Unix() + authTokenExpiration
+
+			err = ds.UpdateAuthToken(token)
 
 			if err != nil {
 				c.AbortWithStatus(http.StatusInternalServerError)
@@ -58,8 +76,8 @@ func getAuthTokenHandler(ds DataSourcer) func(c *gin.Context) {
 	}
 }
 
-// getDeleteAuthTokenHandler returns a gin handler for GET requests for a session token. Returns http.StatusBadRequest if the
-// user is anonymous.
+// getDeleteAuthTokenHandler returns a gin handler for GET requests for a session token. Returns http.StatusBadRequest
+// if the user is anonymous.
 func getDeleteAuthTokenHandler(ds DataSourcer) func(c *gin.Context) {
 	return func(c *gin.Context) {
 		u := auth.GetLoggedUser(c)
