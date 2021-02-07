@@ -28,7 +28,7 @@ func GetLoggingMiddleware() func(c *gin.Context) {
 		ginErr := c.Errors.Last()
 
 		if ginErr != nil {
-			log.Info().
+			log.Error().
 				Str("method", logInfo.Method).
 				Int("http_code", logInfo.HttpCode).
 				Str("endpoint", logInfo.Endpoint).

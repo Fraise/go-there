@@ -18,7 +18,7 @@ func (mockDataSourcer) SelectUserLogin(username string) (data.User, error) {
 	return data.User{}, nil
 }
 
-func (mockDataSourcer) SelectUserLoginByApiKeySalt(apiKeySalt string) (data.User, error) {
+func (mockDataSourcer) SelectUserLoginByApiKeyHash(apiKeyHash string) (data.User, error) {
 	return data.User{}, nil
 }
 
@@ -33,6 +33,14 @@ func (mockDataSourcer) GetTarget(path string) (string, error) {
 	}
 
 	return "", nil
+}
+
+func (mockDataSourcer) GetAuthToken(token string) (data.AuthToken, error) {
+	return data.AuthToken{}, nil
+}
+
+func (mockDataSourcer) UpdateAuthToken(authToken data.AuthToken) error {
+	return nil
 }
 
 func Test_getPathHandler(t *testing.T) {

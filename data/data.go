@@ -7,7 +7,6 @@ type User struct {
 	Username     string `db:"username" json:"username"`
 	IsAdmin      bool   `db:"is_admin" json:"is_admin"`
 	PasswordHash []byte `db:"password_hash" json:"password_hash,omitempty"`
-	ApiKeySalt   []byte `db:"api_key_salt" json:"api_key_salt,omitempty"`
 	ApiKeyHash   []byte `db:"api_key_hash" json:"api_key_hash,omitempty"`
 }
 
@@ -53,7 +52,8 @@ type Login struct {
 // HeaderLogin represents the information given by a user in the header to authenticate. It should be used to unmarshal
 // incoming authentication data.
 type HeaderLogin struct {
-	XApiKey string `header:"X-Api-Key"`
+	XApiKey    string `header:"X-Api-Key"`
+	XAuthToken string `header:"X-Auth-Token"`
 }
 
 // CreateUser represents the information given by a user to create another user. It should be used to unmarshal incoming
@@ -86,4 +86,10 @@ type LogInfo struct {
 	User     string `json:"user"`
 	Ip       string `json:"ip"`
 	HttpCode int    `json:"http_code"`
+}
+
+type AuthToken struct {
+	Token        string `json:"token" db:"token"`
+	ExpirationTS int64  `json:"expiration_ts" db:"expiration_ts"`
+	Username     string `json:"-" db:"username"`
 }

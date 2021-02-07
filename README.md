@@ -92,7 +92,9 @@ The available configuration groups are :
 
 `go` represents the redirection endpoint: `GET` on */go/:path*
 
-`manage_path` represents the path management endpoint: `POST` and `DELETE` on */api/:path*
+`manage_path` represents the path management endpoint: `POST` and `DELETE` on */api/path*
+
+`auth_token` represents the authentication token management endpoint: `GET` and `DELETE` on */api/auth*
 
 ### [Cache]
 

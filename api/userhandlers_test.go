@@ -9,8 +9,7 @@ import (
 // BenchmarkUserCreation mostly used to generate test passwords
 func BenchmarkUserCreation(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		// We don't need to store the salt section individually for a password
-		hash, _, err := auth.GetHashFromPassword("superpassword")
+		hash, err := auth.GetHashFromPassword("superpassword")
 
 		if err != nil {
 			return
@@ -23,14 +22,13 @@ func BenchmarkUserCreation(b *testing.B) {
 			return
 		}
 
-		// Get its corresponding hash and salt
-		apiKeyHash, apiKeySalt, _ := auth.GetHashFromPassword(apiKey)
+		// Get its corresponding hash
+		apiKeyHash, _ := auth.GetHashFromPassword(apiKey)
 
-		fullApiKey := base64.URLEncoding.EncodeToString(append(apiKeySalt, []byte(":"+apiKey)...))
+		fullApiKey := base64.URLEncoding.EncodeToString(append(apiKeyHash, []byte(":"+apiKey)...))
 
 		_ = hash
 		_ = apiKeyHash
-		_ = apiKeySalt
 		_ = fullApiKey
 	}
 }

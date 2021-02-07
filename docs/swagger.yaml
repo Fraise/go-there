@@ -151,6 +151,25 @@ paths:
           description: "Path deleted"
         "400":
           description: "Invalid input"
+  /api/auth:
+    get:
+      tags:
+        - "auth"
+      summary: "Create an authentication token"
+      description: ""
+      operationId: "getAuthToken"
+      responses:
+        "200":
+          description: "Ok"
+    delete:
+      tags:
+        - "auth"
+      summary: "Delete an authentication token"
+      description: ""
+      operationId: "deleteAuthToken"
+      responses:
+        "200":
+          description: "Token deleted"
   /go/{path}:
     get:
       tags:

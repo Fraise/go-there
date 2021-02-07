@@ -25,10 +25,9 @@ func TestGetHashFromPassword(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, got1, err := GetHashFromPassword(tt.args.password)
+			got, err := GetHashFromPassword(tt.args.password)
 
 			assert.True(t, len(got) >= 59)
-			assert.True(t, got1[0] != '$')
 			assert.Nil(t, err)
 		})
 	}
@@ -79,7 +78,7 @@ func Test_validateApiKey(t *testing.T) {
 		assert.Fail(t, err.Error())
 	}
 
-	_, apiKeySalt, err := GetHashFromPassword(apiKey)
+	apiKeyHash, err := GetHashFromPassword(apiKey)
 
 	if err != nil {
 		assert.Fail(t, err.Error())
@@ -95,9 +94,9 @@ func Test_validateApiKey(t *testing.T) {
 		{
 			name: "ok",
 			args: args{
-				apiKey: base64.URLEncoding.EncodeToString(append(apiKeySalt, []byte(":"+apiKey)...)),
+				apiKey: base64.URLEncoding.EncodeToString(append(apiKeyHash, []byte(":"+apiKey)...)),
 			},
-			want:    apiKeySalt,
+			want:    apiKeyHash,
 			want1:   []byte(apiKey),
 			wantErr: false,
 		},
@@ -113,7 +112,7 @@ func Test_validateApiKey(t *testing.T) {
 		{
 			name: "corrupt",
 			args: args{
-				apiKey: "\\" + base64.URLEncoding.EncodeToString(append(apiKeySalt, []byte(":"+apiKey)...))[1:],
+				apiKey: "\\" + base64.URLEncoding.EncodeToString(append(apiKeyHash, []byte(":"+apiKey)...))[1:],
 			},
 			want:    nil,
 			want1:   nil,
@@ -208,9 +207,8 @@ func TestGetLoggedUser(t *testing.T) {
 					c.Keys["user"] = data.User{
 						Username:     "user1",
 						IsAdmin:      false,
-						PasswordHash: []byte("$qwerty.asdfgh"),
-						ApiKeySalt:   []byte("asdfgh"),
-						ApiKeyHash:   []byte("$asdfgh.qwerty"),
+						PasswordHash: []byte("$qwerty:asdfgh"),
+						ApiKeyHash:   []byte("$asdfgh:qwerty"),
 					}
 
 					return c
@@ -219,9 +217,8 @@ func TestGetLoggedUser(t *testing.T) {
 			want: data.User{
 				Username:     "user1",
 				IsAdmin:      false,
-				PasswordHash: []byte("$qwerty.asdfgh"),
-				ApiKeySalt:   []byte("asdfgh"),
-				ApiKeyHash:   []byte("$asdfgh.qwerty"),
+				PasswordHash: []byte("$qwerty:asdfgh"),
+				ApiKeyHash:   []byte("$asdfgh:qwerty"),
 			},
 		},
 		{

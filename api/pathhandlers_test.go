@@ -40,8 +40,8 @@ func (mockDataSourcer) SelectApiKeyHashByUser(username string) ([]byte, error) {
 	return []byte{}, nil
 }
 
-func (mockDataSourcer) SelectUserLoginByApiKeySalt(apiKeySalt string) (data.User, error) {
-	switch apiKeySalt {
+func (mockDataSourcer) SelectUserLoginByApiKeyHash(apiKeyHash string) (data.User, error) {
+	switch apiKeyHash {
 	}
 
 	return data.User{}, nil
@@ -96,6 +96,26 @@ func (mockDataSourcer) DeletePath(path data.Path) error {
 		return errors.New("path error")
 	}
 
+	return nil
+}
+
+func (mockDataSourcer) GetAuthToken(token string) (data.AuthToken, error) {
+	return data.AuthToken{}, nil
+}
+
+func (mockDataSourcer) UpdateAuthToken(authToken data.AuthToken) error {
+	return nil
+}
+
+func (mockDataSourcer) DeleteAuthToken(authToken data.AuthToken) error {
+	return nil
+}
+
+func (mockDataSourcer) GetAuthTokenByUser(username string) (data.AuthToken, error) {
+	return data.AuthToken{}, nil
+}
+
+func (mockDataSourcer) InsertAuthToken(authToken data.AuthToken) error {
 	return nil
 }
 
