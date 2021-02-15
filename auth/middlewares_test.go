@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 )
 
 type mockDataSourcer struct {
@@ -46,6 +47,29 @@ func (mockDataSourcer) SelectUserLoginByApiKeyHash(apiKeyHash string) (data.User
 }
 
 func (mockDataSourcer) GetAuthToken(token string) (data.AuthToken, error) {
+	switch token {
+	case "qwertyuiop1234567890":
+		return data.AuthToken{
+			Token:        "qwertyuiop1234567890",
+			ExpirationTS: time.Now().Unix() + 20*24*3600,
+			Username:     "alice",
+		}, nil
+	case "expiredqwertyuiop1234567890":
+		return data.AuthToken{
+			Token:        "expiredqwertyuiop1234567890",
+			ExpirationTS: time.Now().Unix() - 1,
+			Username:     "alice",
+		}, nil
+	case "updateqwertyuiop1234567890":
+		return data.AuthToken{
+			Token:        "updateqwertyuiop1234567890",
+			ExpirationTS: time.Now().Unix() + 10*24*3600,
+			Username:     "alice",
+		}, nil
+	case "invalidqwertyuiop1234567890":
+		return data.AuthToken{}, data.ErrSqlNoRow
+	}
+
 	return data.AuthToken{}, nil
 }
 
@@ -217,6 +241,78 @@ func TestGetAuthMiddleware(t *testing.T) {
 			},
 			want: resp{
 				code: http.StatusBadRequest,
+				body: nil,
+			},
+		},
+		{
+			name: "ok_auth_token",
+			args: args{
+				req: func() *http.Request {
+					req, _ := http.NewRequest("GET", "/ping", nil)
+					req.Header = map[string][]string{
+						// Alice's token
+						"X-Auth-Token": {"qwertyuiop1234567890"},
+					}
+
+					return req
+				}(),
+			},
+			want: resp{
+				code: http.StatusOK,
+				body: nil,
+			},
+		},
+		{
+			name: "expired_auth_token",
+			args: args{
+				req: func() *http.Request {
+					req, _ := http.NewRequest("GET", "/ping", nil)
+					req.Header = map[string][]string{
+						// Alice's token
+						"X-Auth-Token": {"expiredqwertyuiop1234567890"},
+					}
+
+					return req
+				}(),
+			},
+			want: resp{
+				code: http.StatusUnauthorized,
+				body: []byte("{\"error\":\"token expired\"}"),
+			},
+		},
+		{
+			name: "update_auth_token",
+			args: args{
+				req: func() *http.Request {
+					req, _ := http.NewRequest("GET", "/ping", nil)
+					req.Header = map[string][]string{
+						// Alice's token
+						"X-Auth-Token": {"updateqwertyuiop1234567890"},
+					}
+
+					return req
+				}(),
+			},
+			want: resp{
+				code: http.StatusOK,
+				body: nil,
+			},
+		},
+		{
+			name: "invalid_token",
+			args: args{
+				req: func() *http.Request {
+					req, _ := http.NewRequest("GET", "/ping", nil)
+					req.Header = map[string][]string{
+						// Alice's token
+						"X-Auth-Token": {"invalidqwertyuiop1234567890"},
+					}
+
+					return req
+				}(),
+			},
+			want: resp{
+				code: http.StatusUnauthorized,
 				body: nil,
 			},
 		},
