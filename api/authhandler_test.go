@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
@@ -45,7 +46,8 @@ func Test_getAuthTokenHandler(t *testing.T) {
 			want: resp{
 				code: http.StatusOK,
 				body: data.AuthToken{
-					Token: "qwertyuiop1234567890",
+					Username: "alice_ok",
+					Token:    "qwertyuiop1234567890",
 				},
 			},
 		},
@@ -130,16 +132,28 @@ func Test_getAuthTokenHandler(t *testing.T) {
 
 			e.ServeHTTP(w, tt.args.req)
 
-			at := data.AuthToken{}
-			_ = json.Unmarshal(w.Body.Bytes(), &at)
+			at := b64AuthTokenToToken(w.Body.Bytes())
 
 			assert.Equal(t, tt.want.code, w.Code)
 			if tt.want.tokenGen {
 				assert.Greater(t, len(at.Token), 128)
 				assert.Greater(t, at.ExpirationTS, time.Now().Unix())
 			} else {
+				assert.Equal(t, tt.want.body.Username, at.Username)
 				assert.Equal(t, tt.want.body.Token, at.Token)
 			}
 		})
 	}
+}
+
+func b64AuthTokenToToken(b64 []byte) data.AuthToken {
+	b64at := data.B64AuthToken{}
+	_ = json.Unmarshal(b64, &b64at)
+
+	atBytes, _ := base64.StdEncoding.DecodeString(b64at.B64AuthToken)
+
+	at := data.AuthToken{}
+	_ = json.Unmarshal(atBytes, &at)
+
+	return at
 }

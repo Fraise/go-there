@@ -1,6 +1,8 @@
 package auth
 
 import (
+	"encoding/base64"
+	"encoding/json"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 	"go-there/data"
@@ -251,7 +253,19 @@ func TestGetAuthMiddleware(t *testing.T) {
 					req, _ := http.NewRequest("GET", "/ping", nil)
 					req.Header = map[string][]string{
 						// Alice's token
-						"X-Auth-Token": {"qwertyuiop1234567890"},
+						"X-Auth-Token": {
+							func() string {
+								t := data.AuthToken{
+									Token:        "qwertyuiop1234567890",
+									ExpirationTS: time.Now().Unix() + 20*24*3600,
+									Username:     "alice",
+								}
+
+								b, _ := json.Marshal(t)
+
+								return base64.StdEncoding.EncodeToString(b)
+							}(),
+						},
 					}
 
 					return req
@@ -269,7 +283,19 @@ func TestGetAuthMiddleware(t *testing.T) {
 					req, _ := http.NewRequest("GET", "/ping", nil)
 					req.Header = map[string][]string{
 						// Alice's token
-						"X-Auth-Token": {"expiredqwertyuiop1234567890"},
+						"X-Auth-Token": {
+							func() string {
+								t := data.AuthToken{
+									Token:        "expiredqwertyuiop1234567890",
+									ExpirationTS: time.Now().Unix() - 1,
+									Username:     "alice",
+								}
+
+								b, _ := json.Marshal(t)
+
+								return base64.StdEncoding.EncodeToString(b)
+							}(),
+						},
 					}
 
 					return req
@@ -287,7 +313,19 @@ func TestGetAuthMiddleware(t *testing.T) {
 					req, _ := http.NewRequest("GET", "/ping", nil)
 					req.Header = map[string][]string{
 						// Alice's token
-						"X-Auth-Token": {"updateqwertyuiop1234567890"},
+						"X-Auth-Token": {
+							func() string {
+								t := data.AuthToken{
+									Token:        "updateqwertyuiop1234567890",
+									ExpirationTS: time.Now().Unix() + 10*24*3600,
+									Username:     "alice",
+								}
+
+								b, _ := json.Marshal(t)
+
+								return base64.StdEncoding.EncodeToString(b)
+							}(),
+						},
 					}
 
 					return req
@@ -305,7 +343,19 @@ func TestGetAuthMiddleware(t *testing.T) {
 					req, _ := http.NewRequest("GET", "/ping", nil)
 					req.Header = map[string][]string{
 						// Alice's token
-						"X-Auth-Token": {"invalidqwertyuiop1234567890"},
+						"X-Auth-Token": {
+							func() string {
+								t := data.AuthToken{
+									Token:        "invalidqwertyuiop1234567890",
+									ExpirationTS: time.Now().Unix() + 10*24*3600,
+									Username:     "alice",
+								}
+
+								b, _ := json.Marshal(t)
+
+								return base64.StdEncoding.EncodeToString(b)
+							}(),
+						},
 					}
 
 					return req

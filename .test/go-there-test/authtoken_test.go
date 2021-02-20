@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-var bobToken string
+var bobB64Token string
 var bobApiKey string
 
 func TestCreateUserBob(t *testing.T) {
@@ -52,13 +52,13 @@ func TestGetAuthTokenBob(t *testing.T) {
 		Token string `json:"token"`
 	}
 
-	token := resp.JSON().Object().Value("token").Raw()
+	token := resp.JSON().Object().Value("b64_auth_token").Raw()
 
 	assert.NotEmpty(t, token)
 
 	switch token.(type) {
 	case string:
-		bobToken = token.(string)
+		bobB64Token = token.(string)
 	default:
 		assert.Fail(t, "wrong type")
 	}
@@ -77,7 +77,7 @@ func TestCreateRedirectBob(t *testing.T) {
 
 	e := httpexpect.New(t, "http://go-there:8080")
 
-	e.POST("/api/path").WithHeader("X-Auth-Token", bobToken).WithJSON(cp).
+	e.POST("/api/path").WithHeader("X-Auth-Token", bobB64Token).WithJSON(cp).
 		Expect().Status(http.StatusOK)
 }
 
@@ -103,6 +103,6 @@ func TestFollowRedirectBob(t *testing.T) {
 func TestDeleteBob(t *testing.T) {
 	e := httpexpect.New(t, "http://go-there:8080")
 
-	e.DELETE("/api/users/bob").WithHeader("X-Auth-Token", bobToken).
+	e.DELETE("/api/users/bob").WithHeader("X-Auth-Token", bobB64Token).
 		Expect().Status(http.StatusOK)
 }

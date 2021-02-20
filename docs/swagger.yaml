@@ -161,6 +161,8 @@ paths:
       responses:
         "200":
           description: "Ok"
+          schema:
+            $ref: "#/definitions/AuthToken"
     delete:
       tags:
         - "auth"
@@ -253,3 +255,9 @@ definitions:
       error:
         type: "string"
         example: "user already exists"
+  AuthToken:
+    type: "object"
+    properties:
+      b64_auth_token:
+        type: "string"
+        example: "bi44RkM4YWwueFE0d2RvTkF5akpJTzpPSC1rbkdMcm91VlA3N01pZkJ1Y0F3PT0="

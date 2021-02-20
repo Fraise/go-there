@@ -1,6 +1,8 @@
 package api
 
 import (
+	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"github.com/gin-gonic/gin"
 	"go-there/auth"
@@ -72,7 +74,17 @@ func getAuthTokenHandler(ds DataSourcer) func(c *gin.Context) {
 			}
 		}
 
-		c.JSON(http.StatusOK, token)
+		b64Token, err := json.Marshal(token)
+
+		if err != nil {
+			c.AbortWithStatus(http.StatusInternalServerError)
+			_ = c.Error(err)
+			return
+		}
+
+		c.JSON(http.StatusOK, data.B64AuthToken{
+			B64AuthToken: base64.StdEncoding.EncodeToString(b64Token),
+		})
 	}
 }
 

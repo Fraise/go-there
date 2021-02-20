@@ -1,6 +1,8 @@
 package auth
 
 import (
+	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
@@ -17,7 +19,6 @@ func GetAuthMiddleware(ds DataSourcer) func(c *gin.Context) {
 	return func(c *gin.Context) {
 		var l data.Login
 		var hl data.HeaderLogin
-		var t data.AuthToken
 
 		// Tries to bind authentication header first
 		if err := c.ShouldBindHeader(&hl); err != nil {
@@ -26,9 +27,21 @@ func GetAuthMiddleware(ds DataSourcer) func(c *gin.Context) {
 		}
 
 		if hl.XAuthToken != "" {
+			var t data.AuthToken
 			var err error
+
+			// X-Auth-Token is in b64, so we need to decode it first
+			decodedXAuthToken, err := base64.StdEncoding.DecodeString(hl.XAuthToken)
+
+			err = json.Unmarshal(decodedXAuthToken, &t)
+
+			if err != nil {
+				c.AbortWithStatus(http.StatusBadRequest)
+				return
+			}
+
 			// If the header contains a session token, do not bind the other fields
-			t, err = ds.GetAuthToken(hl.XAuthToken)
+			dbToken, err := ds.GetAuthToken(t.Token)
 
 			if err != nil {
 				switch {
@@ -42,13 +55,18 @@ func GetAuthMiddleware(ds DataSourcer) func(c *gin.Context) {
 				}
 			}
 
-			if t.ExpirationTS < time.Now().Unix() {
-				c.AbortWithStatusJSON(http.StatusUnauthorized, data.ErrorResponse{Error: "token expired"})
-			} else if t.ExpirationTS < time.Now().Unix()+604800 {
-				// If the expiration date if in less than 1 week, renew it
-				t.ExpirationTS = time.Now().Unix()
+			if dbToken.Username != t.Username {
+				c.AbortWithStatus(http.StatusUnauthorized)
+				return
+			}
 
-				err := ds.UpdateAuthToken(t)
+			if dbToken.ExpirationTS < time.Now().Unix() {
+				c.AbortWithStatusJSON(http.StatusUnauthorized, data.ErrorResponse{Error: "token expired"})
+			} else if dbToken.ExpirationTS < time.Now().Unix()+604800 {
+				// If the expiration date if in less than 1 week, renew it
+				dbToken.ExpirationTS = time.Now().Unix()
+
+				err := ds.UpdateAuthToken(dbToken)
 
 				// This can fail silently for the user, but it still needs to be reported to the system
 				if err != nil {
@@ -56,7 +74,7 @@ func GetAuthMiddleware(ds DataSourcer) func(c *gin.Context) {
 				}
 			}
 
-			u, err := ds.SelectUserLogin(t.Username)
+			u, err := ds.SelectUserLogin(dbToken.Username)
 
 			if err != nil {
 				c.AbortWithStatus(http.StatusInternalServerError)
@@ -69,7 +87,7 @@ func GetAuthMiddleware(ds DataSourcer) func(c *gin.Context) {
 
 			// Keep track of the user if he successfully authenticated
 			c.Keys["user"] = u
-			c.Keys["logUser"] = t.Username
+			c.Keys["logUser"] = dbToken.Username
 			// Keep track of which user data we want to access
 			c.Keys["reqUser"] = c.Param("user")
 

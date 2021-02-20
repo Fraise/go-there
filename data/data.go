@@ -91,5 +91,9 @@ type LogInfo struct {
 type AuthToken struct {
 	Token        string `json:"token" db:"token"`
 	ExpirationTS int64  `json:"expiration_ts" db:"expiration_ts"`
-	Username     string `json:"-" db:"username"`
+	Username     string `json:"username" db:"username"`
+}
+
+type B64AuthToken struct {
+	B64AuthToken string `json:"b64_auth_token"`
 }
