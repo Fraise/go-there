@@ -60,7 +60,7 @@ func (ds *DataSource) UpdateUserPassword(user data.User) error {
 	return ds.DataBase.UpdateUserPassword(user)
 }
 
-// UpdateUserPassword updates an user's API key in the database. Returns a data.ErrSql if it fails.
+// UpdateUserApiKey updates an user's API key in the database. Returns a data.ErrSql if it fails.
 func (ds *DataSource) UpdateUserApiKey(user data.User) error {
 	return ds.DataBase.UpdateUserApiKey(user)
 }
