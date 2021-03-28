@@ -95,12 +95,17 @@ func TestGetAuthMiddleware(t *testing.T) {
 		want resp
 	}{
 		{
-			name: "ok_password",
+			name: "ok_basic_auth",
 			args: args{
 				req: func() *http.Request {
-					req, _ := http.NewRequest("GET", "/ping",
-						strings.NewReader("{\"username\":\"alice\", \"password\":\"superpassword\"}"),
-					)
+					req, _ := http.NewRequest("GET", "/ping", nil)
+
+					b64Login := base64.StdEncoding.EncodeToString([]byte("alice:superpassword"))
+
+					req.Header = map[string][]string{
+						// bad Alice's key
+						"Authorization": {"Basic " + b64Login},
+					}
 
 					return req
 				}(),
@@ -114,9 +119,14 @@ func TestGetAuthMiddleware(t *testing.T) {
 			name: "ok_bad_password",
 			args: args{
 				req: func() *http.Request {
-					req, _ := http.NewRequest("GET", "/ping",
-						strings.NewReader("{\"username\":\"alice\", \"password\":\"superrpassword\"}"),
-					)
+					req, _ := http.NewRequest("GET", "/ping", nil)
+
+					b64Login := base64.StdEncoding.EncodeToString([]byte("alice:superrpassword"))
+
+					req.Header = map[string][]string{
+						// bad Alice's key
+						"Authorization": {"Basic " + b64Login},
+					}
 
 					return req
 				}(),
@@ -130,9 +140,14 @@ func TestGetAuthMiddleware(t *testing.T) {
 			name: "db_user_err",
 			args: args{
 				req: func() *http.Request {
-					req, _ := http.NewRequest("GET", "/ping",
-						strings.NewReader("{\"username\":\"aliceErr\", \"password\":\"superrpassword\"}"),
-					)
+					req, _ := http.NewRequest("GET", "/ping", nil)
+
+					b64Login := base64.StdEncoding.EncodeToString([]byte("aliceErr:superrpassword"))
+
+					req.Header = map[string][]string{
+						// bad Alice's key
+						"Authorization": {"Basic " + b64Login},
+					}
 
 					return req
 				}(),

@@ -17,42 +17,32 @@ You can find the API documentation on [this page](https://fraise.github.io/go-th
 ## Authentication
 
 The authentication is handled by the `auth` middleware. It can be enabled per service as described in the 
-[Configuration](#Configuration) section. A user can use a username/password combination, an API key or an authentication
-token.
+[Configuration](#Configuration) section. A user can use a username/password combination (basic auth), an API key or an 
+authentication token.
 
 ### Examples
 
-The username/password can be provided either in JSON form in the request body:
+The username/password can be provided in the [basic auth format](https://en.wikipedia.org/wiki/Basic_access_authentication)
+as a request header:
 
 ```http request
-{
-  "username": "alice",
-  "password": "secretpassword"
-}
+Authorization: Basic YWxpY2U6c2VjcmV0cGFzc3dvcmQ=
 ```
 
-The API key can be provided either in JSON form in the request body:
-
-```http request
-{
-  "api_key": "bi44RkM4YWwueFE0d2RvTkF5akpJTzpPSC1rbkdMcm91VlA3N01pZkJ1Y0F3PT0="
-}
-```
-
-or in a `X-Api-Key` header:
+The API key can be provided in a `X-Api-Key` header:
 
 ```http request
 X-Api-Key: bi44RkM4YWwueFE0d2RvTkF5akpJTzpPSC1rbkdMcm91VlA3N01pZkJ1Y0F3PT0=
 ```
 
-The authentication token must be provided in an `X-Auth-Token` header :
+The authentication token can be provided in an `X-Auth-Token` header :
 
 ```http request
-X-Api-Key: eyJ0b2tlbiI6IlFuc1llRE00aGZZS0wtdUFQamZOTVZMNGNUWV[...]saWNlX2dlbiJ9
+X-Auth-Token: eyJ0b2tlbiI6IlFuc1llRE00aGZZS0wtdUFQamZOTVZMNGNUWV[...]saWNlX2dlbiJ9
 ```
 
 If multiple authentication methods are used at the same time, the validation order is : auth token, API key,
-credentials. Only the first found will be parsed.
+basic auth. Only the first found will be parsed.
 
 
 ### Generate credentials

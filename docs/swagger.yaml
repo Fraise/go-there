@@ -25,10 +25,12 @@ securityDefinitions:
     type: "apiKey"
     name: "X-Api-Key"
     in: "header"
-  PasswordAuth:
+  TokenAuth:
+    type: "apiKey"
+    name: "X-Auth-Token"
+    in: "header"
+  BasicAuth:
     type: "basic"
-    name: "password"
-    in: "body"
 paths:
   /api/users:
     post:

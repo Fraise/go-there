@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/base64"
 	"github.com/gavv/httpexpect/v2"
 	"github.com/stretchr/testify/assert"
 	"net/http"
@@ -75,23 +76,16 @@ func TestCreateRedirectUser1WithPassword(t *testing.T) {
 		Password string `json:"password"`
 	}
 
-	data := struct {
-		Login
-		CreatePath
-	}{
-		Login: Login{
-			Username: "user1",
-			Password: "superpassword",
-		},
-		CreatePath: CreatePath{
-			Path:   "ex",
-			Target: "http://example.com",
-		},
+	data := CreatePath{
+		Path:   "ex",
+		Target: "http://example.com",
 	}
+
+	basicAuth := "Basic " + base64.StdEncoding.EncodeToString([]byte("user1:superpassword"))
 
 	e := httpexpect.New(t, "http://go-there:8080")
 
-	e.POST("/api/path").WithJSON(data).
+	e.POST("/api/path").WithJSON(data).WithHeader("Authorization", basicAuth).
 		Expect().Status(http.StatusOK)
 }
 
@@ -120,14 +114,11 @@ func TestGetUser1(t *testing.T) {
 		Password string `json:"password"`
 	}
 
-	l := Login{
-		Username: "user1",
-		Password: "superpassword",
-	}
+	basicAuth := "Basic " + base64.StdEncoding.EncodeToString([]byte("user1:superpassword"))
 
 	e := httpexpect.New(t, "http://go-there:8080")
 
-	e.GET("/api/users/user1").WithJSON(l).
+	e.GET("/api/users/user1").WithHeader("Authorization", basicAuth).
 		Expect().Status(http.StatusOK)
 }
 
@@ -153,27 +144,15 @@ func TestChangeUser1Password(t *testing.T) {
 		PatchApiKey   bool   `json:"new_api_key"`
 	}
 
-	type Login struct {
-		Username string `json:"username"`
-		Password string `json:"password"`
+	data := PatchUser{
+		PatchPassword: "superpassword1",
 	}
 
-	data := struct {
-		Login
-		PatchUser
-	}{
-		Login: Login{
-			Username: "user1",
-			Password: "superpassword",
-		},
-		PatchUser: PatchUser{
-			PatchPassword: "superpassword1",
-		},
-	}
+	basicAuth := "Basic " + base64.StdEncoding.EncodeToString([]byte("user1:superpassword"))
 
 	e := httpexpect.New(t, "http://go-there:8080")
 
-	e.PATCH("/api/users/user1").WithJSON(data).
+	e.PATCH("/api/users/user1").WithJSON(data).WithHeader("Authorization", basicAuth).
 		Expect().Status(http.StatusOK)
 }
 
@@ -183,14 +162,11 @@ func TestGetUser1WrongPassword(t *testing.T) {
 		Password string `json:"password"`
 	}
 
-	l := Login{
-		Username: "user1",
-		Password: "superpassword",
-	}
+	basicAuth := "Basic " + base64.StdEncoding.EncodeToString([]byte("user1:superpassword"))
 
 	e := httpexpect.New(t, "http://go-there:8080")
 
-	e.GET("/api/users/user1").WithJSON(l).
+	e.GET("/api/users/user1").WithHeader("Authorization", basicAuth).
 		Expect().Status(http.StatusUnauthorized)
 }
 
@@ -200,14 +176,11 @@ func TestGetUser1OK(t *testing.T) {
 		Password string `json:"password"`
 	}
 
-	l := Login{
-		Username: "user1",
-		Password: "superpassword1",
-	}
+	basicAuth := "Basic " + base64.StdEncoding.EncodeToString([]byte("user1:superpassword1"))
 
 	e := httpexpect.New(t, "http://go-there:8080")
 
-	e.GET("/api/users/user1").WithJSON(l).
+	e.GET("/api/users/user1").WithHeader("Authorization", basicAuth).
 		Expect().Status(http.StatusOK)
 }
 
@@ -217,14 +190,11 @@ func TestGetUser1FromUser2(t *testing.T) {
 		Password string `json:"password"`
 	}
 
-	l := Login{
-		Username: "user2",
-		Password: "superpassword",
-	}
+	basicAuth := "Basic " + base64.StdEncoding.EncodeToString([]byte("user2:superpassword"))
 
 	e := httpexpect.New(t, "http://go-there:8080")
 
-	e.GET("/api/users/user1").WithJSON(l).
+	e.GET("/api/users/user1").WithHeader("Authorization", basicAuth).
 		Expect().Status(http.StatusForbidden)
 }
 
@@ -236,19 +206,13 @@ func TestDeleteAllUsersWithPasswords(t *testing.T) {
 		Password string `json:"password"`
 	}
 
-	l := Login{
-		Username: "user1",
-		Password: "superpassword1",
-	}
+	basicAuth := "Basic " + base64.StdEncoding.EncodeToString([]byte("user1:superpassword1"))
 
-	e.DELETE("/api/users/user1").WithJSON(l).
+	e.DELETE("/api/users/user1").WithHeader("Authorization", basicAuth).
 		Expect().Status(http.StatusOK)
 
-	l = Login{
-		Username: "user2",
-		Password: "superpassword",
-	}
+	basicAuth = "Basic " + base64.StdEncoding.EncodeToString([]byte("user2:superpassword"))
 
-	e.DELETE("/api/users/user2").WithJSON(l).
+	e.DELETE("/api/users/user2").WithHeader("Authorization", basicAuth).
 		Expect().Status(http.StatusOK)
 }
