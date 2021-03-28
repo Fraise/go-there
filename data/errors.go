@@ -12,7 +12,8 @@ var (
 
 // Auth errors
 var (
-	ErrInvalidKey = errors.New("auth: invalid api key")
+	ErrInvalidKey  = errors.New("auth: invalid api key")
+	ErrInvalidAuth = errors.New("auth: invalid authentication")
 )
 
 // Init errors

@@ -41,19 +41,12 @@ type DeletePath struct {
 	Path string `json:"path" binding:"required"`
 }
 
-// Login represents the information given by a user to authenticate. It should be used to unmarshal incoming
-// authentication data.
-type Login struct {
-	Username string `form:"username" json:"username"`
-	Password string `form:"password" json:"password"`
-	ApiKey   string `form:"api_key" json:"api_key"`
-}
-
 // HeaderLogin represents the information given by a user in the header to authenticate. It should be used to unmarshal
 // incoming authentication data.
 type HeaderLogin struct {
-	XApiKey    string `header:"X-Api-Key"`
-	XAuthToken string `header:"X-Auth-Token"`
+	XApiKey       string `header:"X-Api-Key"`
+	XAuthToken    string `header:"X-Auth-Token"`
+	Authorization string `header:"Authorization"`
 }
 
 // CreateUser represents the information given by a user to create another user. It should be used to unmarshal incoming
@@ -79,7 +72,7 @@ type ErrorResponse struct {
 	Error string `json:"error"`
 }
 
-// LogInfo represents the data logged when a user makes a request
+// LogInfo represents the data logged when a user makes a request.
 type LogInfo struct {
 	Method   string `json:"method"`
 	Endpoint string `json:"endpoint"`
@@ -88,8 +81,20 @@ type LogInfo struct {
 	HttpCode int    `json:"http_code"`
 }
 
+// AuthToken represents a temporary token that can be used by a client to authenticate.
 type AuthToken struct {
 	Token        string `json:"token" db:"token"`
 	ExpirationTS int64  `json:"expiration_ts" db:"expiration_ts"`
-	Username     string `json:"-" db:"username"`
+	Username     string `json:"username" db:"username"`
+}
+
+// B64AuthToken is the b64 form of a data.AuthToken
+type B64AuthToken struct {
+	B64AuthToken string `json:"b64_auth_token"`
+}
+
+// BasicAuthLogin is used to store the username:password from a basic authentication.
+type BasicAuthLogin struct {
+	Username string
+	Password string
 }

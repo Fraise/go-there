@@ -1,9 +1,10 @@
 package auth
 
 import (
+	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"github.com/gin-gonic/gin"
-	"github.com/gin-gonic/gin/binding"
 	"go-there/data"
 	"golang.org/x/crypto/bcrypt"
 	"net/http"
@@ -15,20 +16,36 @@ import (
 // data.Login struct. It then tries to authenticate the user with an api key or an user/password if no key is provided.
 func GetAuthMiddleware(ds DataSourcer) func(c *gin.Context) {
 	return func(c *gin.Context) {
-		var l data.Login
 		var hl data.HeaderLogin
-		var t data.AuthToken
 
-		// Tries to bind authentication header first
+		// Tries to bind authentication headers first
 		if err := c.ShouldBindHeader(&hl); err != nil {
 			c.AbortWithStatus(http.StatusBadRequest)
 			return
 		}
 
+		// Check token first
 		if hl.XAuthToken != "" {
+			var t data.AuthToken
 			var err error
+
+			// X-Auth-Token is in b64, so we need to decode it first
+			decodedXAuthToken, err := base64.StdEncoding.DecodeString(hl.XAuthToken)
+
+			if err != nil {
+				c.AbortWithStatus(http.StatusBadRequest)
+				return
+			}
+
+			err = json.Unmarshal(decodedXAuthToken, &t)
+
+			if err != nil {
+				c.AbortWithStatus(http.StatusBadRequest)
+				return
+			}
+
 			// If the header contains a session token, do not bind the other fields
-			t, err = ds.GetAuthToken(hl.XAuthToken)
+			dbToken, err := ds.GetAuthToken(t.Token)
 
 			if err != nil {
 				switch {
@@ -42,13 +59,18 @@ func GetAuthMiddleware(ds DataSourcer) func(c *gin.Context) {
 				}
 			}
 
-			if t.ExpirationTS < time.Now().Unix() {
-				c.AbortWithStatusJSON(http.StatusUnauthorized, data.ErrorResponse{Error: "token expired"})
-			} else if t.ExpirationTS < time.Now().Unix()+604800 {
-				// If the expiration date if in less than 1 week, renew it
-				t.ExpirationTS = time.Now().Unix()
+			if dbToken.Username != t.Username {
+				c.AbortWithStatus(http.StatusUnauthorized)
+				return
+			}
 
-				err := ds.UpdateAuthToken(t)
+			if dbToken.ExpirationTS < time.Now().Unix() {
+				c.AbortWithStatusJSON(http.StatusUnauthorized, data.ErrorResponse{Error: "token expired"})
+			} else if dbToken.ExpirationTS < time.Now().Unix()+604800 {
+				// If the expiration date if in less than 1 week, renew it
+				dbToken.ExpirationTS = time.Now().Unix()
+
+				err := ds.UpdateAuthToken(dbToken)
 
 				// This can fail silently for the user, but it still needs to be reported to the system
 				if err != nil {
@@ -56,7 +78,7 @@ func GetAuthMiddleware(ds DataSourcer) func(c *gin.Context) {
 				}
 			}
 
-			u, err := ds.SelectUserLogin(t.Username)
+			u, err := ds.SelectUserLogin(dbToken.Username)
 
 			if err != nil {
 				c.AbortWithStatus(http.StatusInternalServerError)
@@ -64,37 +86,21 @@ func GetAuthMiddleware(ds DataSourcer) func(c *gin.Context) {
 				return
 			}
 
-			// The keys map is only initialized if a call to ShouldBindBody is made
 			c.Keys = make(map[string]interface{})
 
 			// Keep track of the user if he successfully authenticated
 			c.Keys["user"] = u
-			c.Keys["logUser"] = t.Username
+			c.Keys["logUser"] = dbToken.Username
 			// Keep track of which user data we want to access
 			c.Keys["reqUser"] = c.Param("user")
 
 			return
 		}
 
+		// Check API key
 		if hl.XApiKey != "" {
 			// If the header contains an API key, do not bind the other fields
-			l.ApiKey = hl.XApiKey
-			// The keys map is only initialized if a call to ShouldBindBody is made
-			c.Keys = make(map[string]interface{})
-		} else {
-			// Tries to bind the JSON data related to login
-			// Implicitly initialize the c.Keys map
-			if err := c.ShouldBindBodyWith(&l, binding.JSON); err != nil {
-				c.AbortWithStatus(http.StatusBadRequest)
-				return
-			}
-		}
-
-		c.Keys["logUser"] = l.Username
-
-		if l.ApiKey != "" {
-			// If we receive an api key
-			hash, ak, err := validateApiKey(l.ApiKey)
+			hash, ak, err := validateApiKey(hl.XApiKey)
 
 			if err != nil {
 				c.AbortWithStatus(http.StatusBadRequest)
@@ -121,13 +127,26 @@ func GetAuthMiddleware(ds DataSourcer) func(c *gin.Context) {
 				return
 			}
 
+			c.Keys = make(map[string]interface{})
+
 			// Keep track of the user if he successfully authenticated
 			c.Keys["user"] = u
 			c.Keys["logUser"] = u.Username
 			// Keep track of which user data we want to access
 			c.Keys["reqUser"] = c.Param("user")
-		} else if l.Username != "" {
-			// If we receive a username+password
+
+			return
+		}
+
+		// Check basic auth
+		if hl.Authorization != "" {
+			l, err := basicAuthToLogin(hl.Authorization)
+
+			if err != nil {
+				c.AbortWithStatus(http.StatusBadRequest)
+				return
+			}
+
 			u, err := ds.SelectUserLogin(l.Username)
 
 			if err != nil {
@@ -147,14 +166,18 @@ func GetAuthMiddleware(ds DataSourcer) func(c *gin.Context) {
 				return
 			}
 
+			c.Keys = make(map[string]interface{})
+
 			// Keep track of the user if he successfully authenticated
 			c.Keys["user"] = u
 			c.Keys["logUser"] = u.Username
 			// Keep track of which user data we want to access
 			c.Keys["reqUser"] = c.Param("user")
-		} else {
-			c.AbortWithStatus(http.StatusUnauthorized)
+
+			return
 		}
+
+		c.AbortWithStatus(http.StatusUnauthorized)
 	}
 }
 

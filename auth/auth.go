@@ -4,9 +4,11 @@ import (
 	"bytes"
 	"crypto/rand"
 	"encoding/base64"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"go-there/data"
 	"golang.org/x/crypto/bcrypt"
+	"strings"
 )
 
 const bCryptCost = bcrypt.DefaultCost
@@ -91,4 +93,31 @@ func validateApiKey(apiKey string) ([]byte, []byte, error) {
 	}
 
 	return apiKeyArr[0], apiKeyArr[1], nil
+}
+
+// basicAuthToLogin take a b64 encoded basic authentication string and return a data.BasicAuthLogin with username
+// and password. Returns data.ErrInvalidAuth if the decoded basic auth format is invalid.
+func basicAuthToLogin(basicAuthHeader string) (data.BasicAuthLogin, error) {
+	s := strings.Split(basicAuthHeader, " ")
+
+	if len(s) != 2 || s[0] != "Basic" {
+		return data.BasicAuthLogin{}, data.ErrInvalidAuth
+	}
+
+	b, err := base64.StdEncoding.DecodeString(s[1])
+
+	if err != nil {
+		return data.BasicAuthLogin{}, fmt.Errorf("%w : %s", data.ErrInvalidAuth, err)
+	}
+
+	bb := bytes.SplitN(b, []byte(":"), 2)
+
+	if len(bb) != 2 {
+		return data.BasicAuthLogin{}, data.ErrInvalidAuth
+	}
+
+	return data.BasicAuthLogin{
+		Username: string(bb[0]),
+		Password: string(bb[1]),
+	}, nil
 }

@@ -328,16 +328,18 @@ func (ds *DataBase) GetAuthToken(token string) (data.AuthToken, error) {
 }
 
 // GetAuthTokenByUser gets an authorization token in the database from a username. Returns a data.ErrSqlNoRow if it
-// doesn't exist or data.ErrSql if it fails.
+// doesn't exist or data.ErrSql if it fails. Always returns the username in the token if the operation is successful.
 func (ds *DataBase) GetAuthTokenByUser(username string) (data.AuthToken, error) {
-	// TODO merge it with GetAuthToken
+	// TODO merge it with GetAuthToken ?
 	t := data.AuthToken{}
 	err := ds.db.Get(&t, ds.db.Rebind("SELECT * FROM token WHERE username=?"), username)
 
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
-			return data.AuthToken{}, data.ErrSqlNoRow
+			return data.AuthToken{
+				Username: username,
+			}, data.ErrSqlNoRow
 		default:
 			return data.AuthToken{}, fmt.Errorf("%w : %s", data.ErrSql, err)
 		}

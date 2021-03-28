@@ -1,6 +1,8 @@
 package auth
 
 import (
+	"encoding/base64"
+	"encoding/json"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 	"go-there/data"
@@ -8,6 +10,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 )
 
 type mockDataSourcer struct {
@@ -46,6 +49,29 @@ func (mockDataSourcer) SelectUserLoginByApiKeyHash(apiKeyHash string) (data.User
 }
 
 func (mockDataSourcer) GetAuthToken(token string) (data.AuthToken, error) {
+	switch token {
+	case "qwertyuiop1234567890":
+		return data.AuthToken{
+			Token:        "qwertyuiop1234567890",
+			ExpirationTS: time.Now().Unix() + 20*24*3600,
+			Username:     "alice",
+		}, nil
+	case "expiredqwertyuiop1234567890":
+		return data.AuthToken{
+			Token:        "expiredqwertyuiop1234567890",
+			ExpirationTS: time.Now().Unix() - 1,
+			Username:     "alice",
+		}, nil
+	case "updateqwertyuiop1234567890":
+		return data.AuthToken{
+			Token:        "updateqwertyuiop1234567890",
+			ExpirationTS: time.Now().Unix() + 10*24*3600,
+			Username:     "alice",
+		}, nil
+	case "invalidqwertyuiop1234567890":
+		return data.AuthToken{}, data.ErrSqlNoRow
+	}
+
 	return data.AuthToken{}, nil
 }
 
@@ -69,12 +95,17 @@ func TestGetAuthMiddleware(t *testing.T) {
 		want resp
 	}{
 		{
-			name: "ok_password",
+			name: "ok_basic_auth",
 			args: args{
 				req: func() *http.Request {
-					req, _ := http.NewRequest("GET", "/ping",
-						strings.NewReader("{\"username\":\"alice\", \"password\":\"superpassword\"}"),
-					)
+					req, _ := http.NewRequest("GET", "/ping", nil)
+
+					b64Login := base64.StdEncoding.EncodeToString([]byte("alice:superpassword"))
+
+					req.Header = map[string][]string{
+						// bad Alice's key
+						"Authorization": {"Basic " + b64Login},
+					}
 
 					return req
 				}(),
@@ -88,9 +119,14 @@ func TestGetAuthMiddleware(t *testing.T) {
 			name: "ok_bad_password",
 			args: args{
 				req: func() *http.Request {
-					req, _ := http.NewRequest("GET", "/ping",
-						strings.NewReader("{\"username\":\"alice\", \"password\":\"superrpassword\"}"),
-					)
+					req, _ := http.NewRequest("GET", "/ping", nil)
+
+					b64Login := base64.StdEncoding.EncodeToString([]byte("alice:superrpassword"))
+
+					req.Header = map[string][]string{
+						// bad Alice's key
+						"Authorization": {"Basic " + b64Login},
+					}
 
 					return req
 				}(),
@@ -104,9 +140,14 @@ func TestGetAuthMiddleware(t *testing.T) {
 			name: "db_user_err",
 			args: args{
 				req: func() *http.Request {
-					req, _ := http.NewRequest("GET", "/ping",
-						strings.NewReader("{\"username\":\"aliceErr\", \"password\":\"superrpassword\"}"),
-					)
+					req, _ := http.NewRequest("GET", "/ping", nil)
+
+					b64Login := base64.StdEncoding.EncodeToString([]byte("aliceErr:superrpassword"))
+
+					req.Header = map[string][]string{
+						// bad Alice's key
+						"Authorization": {"Basic " + b64Login},
+					}
 
 					return req
 				}(),
@@ -217,6 +258,126 @@ func TestGetAuthMiddleware(t *testing.T) {
 			},
 			want: resp{
 				code: http.StatusBadRequest,
+				body: nil,
+			},
+		},
+		{
+			name: "ok_auth_token",
+			args: args{
+				req: func() *http.Request {
+					req, _ := http.NewRequest("GET", "/ping", nil)
+					req.Header = map[string][]string{
+						// Alice's token
+						"X-Auth-Token": {
+							func() string {
+								t := data.AuthToken{
+									Token:        "qwertyuiop1234567890",
+									ExpirationTS: time.Now().Unix() + 20*24*3600,
+									Username:     "alice",
+								}
+
+								b, _ := json.Marshal(t)
+
+								return base64.StdEncoding.EncodeToString(b)
+							}(),
+						},
+					}
+
+					return req
+				}(),
+			},
+			want: resp{
+				code: http.StatusOK,
+				body: nil,
+			},
+		},
+		{
+			name: "expired_auth_token",
+			args: args{
+				req: func() *http.Request {
+					req, _ := http.NewRequest("GET", "/ping", nil)
+					req.Header = map[string][]string{
+						// Alice's token
+						"X-Auth-Token": {
+							func() string {
+								t := data.AuthToken{
+									Token:        "expiredqwertyuiop1234567890",
+									ExpirationTS: time.Now().Unix() - 1,
+									Username:     "alice",
+								}
+
+								b, _ := json.Marshal(t)
+
+								return base64.StdEncoding.EncodeToString(b)
+							}(),
+						},
+					}
+
+					return req
+				}(),
+			},
+			want: resp{
+				code: http.StatusUnauthorized,
+				body: []byte("{\"error\":\"token expired\"}"),
+			},
+		},
+		{
+			name: "update_auth_token",
+			args: args{
+				req: func() *http.Request {
+					req, _ := http.NewRequest("GET", "/ping", nil)
+					req.Header = map[string][]string{
+						// Alice's token
+						"X-Auth-Token": {
+							func() string {
+								t := data.AuthToken{
+									Token:        "updateqwertyuiop1234567890",
+									ExpirationTS: time.Now().Unix() + 10*24*3600,
+									Username:     "alice",
+								}
+
+								b, _ := json.Marshal(t)
+
+								return base64.StdEncoding.EncodeToString(b)
+							}(),
+						},
+					}
+
+					return req
+				}(),
+			},
+			want: resp{
+				code: http.StatusOK,
+				body: nil,
+			},
+		},
+		{
+			name: "invalid_token",
+			args: args{
+				req: func() *http.Request {
+					req, _ := http.NewRequest("GET", "/ping", nil)
+					req.Header = map[string][]string{
+						// Alice's token
+						"X-Auth-Token": {
+							func() string {
+								t := data.AuthToken{
+									Token:        "invalidqwertyuiop1234567890",
+									ExpirationTS: time.Now().Unix() + 10*24*3600,
+									Username:     "alice",
+								}
+
+								b, _ := json.Marshal(t)
+
+								return base64.StdEncoding.EncodeToString(b)
+							}(),
+						},
+					}
+
+					return req
+				}(),
+			},
+			want: resp{
+				code: http.StatusUnauthorized,
 				body: nil,
 			},
 		},

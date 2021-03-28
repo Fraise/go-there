@@ -60,7 +60,7 @@ func (ds *DataSource) UpdateUserPassword(user data.User) error {
 	return ds.DataBase.UpdateUserPassword(user)
 }
 
-// UpdateUserPassword updates an user's API key in the database. Returns a data.ErrSql if it fails.
+// UpdateUserApiKey updates an user's API key in the database. Returns a data.ErrSql if it fails.
 func (ds *DataSource) UpdateUserApiKey(user data.User) error {
 	return ds.DataBase.UpdateUserApiKey(user)
 }
@@ -204,14 +204,14 @@ func (ds *DataSource) GetAuthToken(token string) (data.AuthToken, error) {
 	err = ds.Cache.AddAuthToken(t)
 
 	if err != nil {
-		log.Warn().Err(err).Msg("error inserting path in cache")
+		log.Warn().Err(err).Msg("error inserting auth token in cache")
 	}
 
 	return t, nil
 }
 
 // GetAuthTokenByUser gets an authorization token in the database from a token string. Returns a data.ErrSqlNoRow if it
-// doesn't exist or data.ErrSql if it fails.
+// doesn't exist or data.ErrSql if it fails. Always returns the username in the token if the operation is successful.
 func (ds *DataSource) GetAuthTokenByUser(username string) (data.AuthToken, error) {
 	return ds.DataBase.GetAuthTokenByUser(username)
 }

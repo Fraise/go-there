@@ -10,6 +10,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 )
 
 type mockDataSourcer struct {
@@ -112,6 +113,23 @@ func (mockDataSourcer) DeleteAuthToken(authToken data.AuthToken) error {
 }
 
 func (mockDataSourcer) GetAuthTokenByUser(username string) (data.AuthToken, error) {
+	switch username {
+	case "alice_ok":
+		return data.AuthToken{
+			Token:        "qwertyuiop1234567890",
+			ExpirationTS: time.Now().Unix() + 20*24*3600,
+			Username:     "alice_ok",
+		}, nil
+	case "alice_gen":
+		return data.AuthToken{}, data.ErrSqlNoRow
+	case "alice_renew":
+		return data.AuthToken{
+			Token:        "renewqwertyuiop1234567890",
+			ExpirationTS: time.Now().Unix() - 1,
+			Username:     "alice_renew",
+		}, nil
+	}
+
 	return data.AuthToken{}, nil
 }
 
