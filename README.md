@@ -113,6 +113,22 @@ The available configuration groups are :
 
 `auth_token` represents the authentication token management endpoint: `GET` and `DELETE` on */api/auth*
 
+### [UserRules]
+
+Defines the rules applied when creating a new user. If no rule is provided, sane defaults are used.
+
+`UsernameRegex` Regular expression used to validate usernames. It must be a full match. Defaults to `[a-z_][a-z0-9_-]*`
+
+`UsernameMinLen` Minimum length of the username. No minimum if -1 is set. Defaults to 1
+
+`UsernameMaxLen` Maximum length of the username. No maximum if -1 is set. Defaults to 24
+
+`PasswordRegex` Regular expression used to validate passwords. It must be a full match. No validation by default
+
+`PasswordMinLen` Minimum length of the password. No minimum if -1 is set. Defaults to 8
+
+`PasswordMaxLen` Maximum length of the username. No maximum if -1 is set. Defaults to 64
+
 ### [Cache]
 
 The cache supports both Redis and local cache. It is only used to cache redirection requests, and local and network

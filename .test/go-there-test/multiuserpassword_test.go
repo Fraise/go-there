@@ -65,6 +65,23 @@ func TestCreateUser2(t *testing.T) {
 	}
 }
 
+func TestCreateUserFailShortPass(t *testing.T) {
+	type CreateUser struct {
+		CreateUser     string `json:"create_user"`
+		CreatePassword string `json:"create_password"`
+	}
+
+	cu := CreateUser{
+		CreateUser:     "user3",
+		CreatePassword: "short",
+	}
+
+	e := httpexpect.New(t, "http://go-there:8080")
+
+	e.POST("/api/users").WithJSON(cu).
+		Expect().Status(http.StatusBadRequest)
+}
+
 func TestCreateRedirectUser1WithPassword(t *testing.T) {
 	type CreatePath struct {
 		Path   string `json:"path"`

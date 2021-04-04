@@ -12,9 +12,8 @@ import (
 )
 
 // Username default validation
-var usernameRegexp = func() *regexp.Regexp {
-	return regexp.MustCompile("[a-z_][a-z0-9_-]*")
-}()
+var usernameRegexp = regexp.MustCompile("[a-z_][a-z0-9_-]*")
+
 var usernameMinLen = 1
 var usernameMaxLen = 24
 
@@ -42,7 +41,7 @@ func getCreateHandler(ds DataSourcer) func(c *gin.Context) {
 			return
 		}
 
-		if !validateInput(cu.CreateUser, passwordRegexp, passwordMinLen, passwordMaxLen) {
+		if !validateInput(cu.CreatePassword, passwordRegexp, passwordMinLen, passwordMaxLen) {
 			c.AbortWithStatusJSON(http.StatusBadRequest, data.ErrorResponse{Error: "invalid password"})
 			return
 		}

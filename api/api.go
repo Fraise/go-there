@@ -126,7 +126,7 @@ func Init(conf *config.Configuration, e *gin.Engine, ds DataSourcer) {
 }
 
 // ApplyUserSettings parses the username and password rules, then apply them to the global variables. If a rule has a
-// zero value, the default rules are used.
+// zero value, the default rules are used. Returns an data.ErrSettings if an error happens.
 func ApplyUserSettings(conf *config.Configuration) error {
 	if conf.UserRules.UsernameRegex != "" {
 		r, err := regexp.Compile(conf.UserRules.UsernameRegex)
@@ -136,8 +136,6 @@ func ApplyUserSettings(conf *config.Configuration) error {
 		}
 
 		usernameRegexp = r
-	} else {
-		usernameRegexp = nil
 	}
 
 	if conf.UserRules.PasswordRegex != "" {
@@ -148,24 +146,26 @@ func ApplyUserSettings(conf *config.Configuration) error {
 		}
 
 		passwordRegexp = r
-	} else {
-		passwordRegexp = nil
 	}
 
 	// Set username and password size limits
-	if passwordMinLen != 0 {
+	if passwordMinLen > passwordMaxLen || usernameMinLen > usernameMaxLen {
+		return fmt.Errorf("%w : %s", data.ErrSettings, "invalid username or password validation")
+	}
+
+	if conf.UserRules.PasswordMinLen != 0 {
 		passwordMinLen = conf.UserRules.PasswordMinLen
 	}
 
-	if passwordMaxLen != 0 {
+	if conf.UserRules.PasswordMaxLen != 0 {
 		passwordMaxLen = conf.UserRules.PasswordMaxLen
 	}
 
-	if usernameMinLen != 0 {
+	if conf.UserRules.UsernameMinLen != 0 {
 		usernameMinLen = conf.UserRules.UsernameMinLen
 	}
 
-	if usernameMaxLen != 0 {
+	if conf.UserRules.UsernameMaxLen != 0 {
 		usernameMaxLen = conf.UserRules.UsernameMaxLen
 	}
 

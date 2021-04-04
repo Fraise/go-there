@@ -23,6 +23,14 @@ func Test_parseConfig(t *testing.T) {
 		"go={ Enabled=true, Auth=false, AdminOnly=false, Log=true }\n" +
 		"manage_paths={ Enabled=true, Auth=false, AdminOnly=false }\n" +
 		"\n" +
+		"[UserRules]\n" +
+		"UsernameRegex=\"\"\n" +
+		"UsernameMinLen=1\n" +
+		"UsernameMaxLen=16\n" +
+		"PasswordRegex=\"\"\n" +
+		"PasswordMinLen=8\n" +
+		"PasswordMaxLen=64\n" +
+		"\n" +
 		"[Cache]\n" +
 		"Enabled=true\n" +
 		"Type=\"redis\"\n" +
@@ -113,6 +121,14 @@ func Test_parseConfig(t *testing.T) {
 				Logs: Logs{
 					File:   "",
 					AsJSON: true,
+				},
+				UserRules: UserRules{
+					UsernameRegex:  "",
+					UsernameMinLen: 1,
+					UsernameMaxLen: 16,
+					PasswordRegex:  "",
+					PasswordMinLen: 8,
+					PasswordMaxLen: 64,
 				},
 			},
 			wantErr: false,
@@ -152,6 +168,14 @@ func TestInit(t *testing.T) {
 		"go={ Enabled=true, Auth=false, AdminOnly=false, Log=true }\n" +
 		"manage_paths={ Enabled=true, Auth=false, AdminOnly=false }\n" +
 		"\n" +
+		"[UserRules]\n" +
+		"UsernameRegex=\"\"\n" +
+		"UsernameMinLen=1\n" +
+		"UsernameMaxLen=16\n" +
+		"PasswordRegex=\"\"\n" +
+		"PasswordMinLen=8\n" +
+		"PasswordMaxLen=64\n" +
+		"\n" +
 		"[Cache]\n" +
 		"Enabled=true\n" +
 		"Type=\"redis\"\n" +
@@ -242,6 +266,14 @@ func TestInit(t *testing.T) {
 				Logs: Logs{
 					File:   "",
 					AsJSON: true,
+				},
+				UserRules: UserRules{
+					UsernameRegex:  "",
+					UsernameMinLen: 1,
+					UsernameMaxLen: 16,
+					PasswordRegex:  "",
+					PasswordMinLen: 8,
+					PasswordMaxLen: 64,
 				},
 			},
 			wantErr: false,
