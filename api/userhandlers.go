@@ -8,7 +8,20 @@ import (
 	"go-there/auth"
 	"go-there/data"
 	"net/http"
+	"regexp"
 )
+
+// Username default validation
+var usernameRegexp = func() *regexp.Regexp {
+	return regexp.MustCompile("[a-z_][a-z0-9_-]*")
+}()
+var usernameMinLen = 1
+var usernameMaxLen = 24
+
+// Password default validation
+var passwordRegexp *regexp.Regexp = nil
+var passwordMinLen = 8
+var passwordMaxLen = 64
 
 // getCreateHandler returns a gin handler which tries to insert a new user in the database. It first bind provided JSON
 // data (or fails), then hashes the password, generates an API key and tries to insert everything in the database. If it
@@ -21,6 +34,16 @@ func getCreateHandler(ds DataSourcer) func(c *gin.Context) {
 
 		if err != nil {
 			c.AbortWithStatus(http.StatusBadRequest)
+			return
+		}
+
+		if !validateInput(cu.CreateUser, usernameRegexp, usernameMinLen, usernameMaxLen) {
+			c.AbortWithStatusJSON(http.StatusBadRequest, data.ErrorResponse{Error: "invalid username"})
+			return
+		}
+
+		if !validateInput(cu.CreateUser, passwordRegexp, passwordMinLen, passwordMaxLen) {
+			c.AbortWithStatusJSON(http.StatusBadRequest, data.ErrorResponse{Error: "invalid password"})
 			return
 		}
 
@@ -198,4 +221,32 @@ func getUserList(ds DataSourcer) func(c *gin.Context) {
 
 		c.JSON(http.StatusOK, users)
 	}
+}
+
+// validateInput checks the input max and min length, and checks for a perfect match against the regexp defined in the
+// settings.
+func validateInput(input string, regexp *regexp.Regexp, minLen int, maxLen int) bool {
+	if input == "" {
+		return false
+	}
+
+	// minLen and maxLen are not checked if explicitly set to < 0
+	if minLen > 0 && len(input) < minLen {
+		return false
+	}
+
+	if maxLen > 0 && len(input) > maxLen {
+		return false
+	}
+
+	if regexp != nil {
+		match := regexp.FindString(input)
+
+		// If we don't find any match or the input does not exactly match the regexp
+		if match == "" || len(match) != len(input) {
+			return false
+		}
+	}
+
+	return true
 }

@@ -20,3 +20,8 @@ var (
 var (
 	ErrInit = errors.New("init: failed")
 )
+
+// Settings errors
+var (
+	ErrSettings = errors.New("settings: failed parsing")
+)

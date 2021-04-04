@@ -1,11 +1,13 @@
 package api
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"go-there/auth"
 	"go-there/config"
 	"go-there/data"
 	"go-there/logging"
+	"regexp"
 )
 
 const authTokenLength = 128
@@ -121,4 +123,51 @@ func Init(conf *config.Configuration, e *gin.Engine, ds DataSourcer) {
 		path.GET("", getAuthTokenHandler(ds))
 		path.DELETE("", getDeleteAuthTokenHandler(ds))
 	}
+}
+
+// ApplyUserSettings parses the username and password rules, then apply them to the global variables. If a rule has a
+// zero value, the default rules are used.
+func ApplyUserSettings(conf *config.Configuration) error {
+	if conf.UserRules.UsernameRegex != "" {
+		r, err := regexp.Compile(conf.UserRules.UsernameRegex)
+
+		if err != nil {
+			return fmt.Errorf("%w : %s", data.ErrSettings, err)
+		}
+
+		usernameRegexp = r
+	} else {
+		usernameRegexp = nil
+	}
+
+	if conf.UserRules.PasswordRegex != "" {
+		r, err := regexp.Compile(conf.UserRules.PasswordRegex)
+
+		if err != nil {
+			return fmt.Errorf("%w : %s", data.ErrSettings, err)
+		}
+
+		passwordRegexp = r
+	} else {
+		passwordRegexp = nil
+	}
+
+	// Set username and password size limits
+	if passwordMinLen != 0 {
+		passwordMinLen = conf.UserRules.PasswordMinLen
+	}
+
+	if passwordMaxLen != 0 {
+		passwordMaxLen = conf.UserRules.PasswordMaxLen
+	}
+
+	if usernameMinLen != 0 {
+		usernameMinLen = conf.UserRules.UsernameMinLen
+	}
+
+	if usernameMaxLen != 0 {
+		usernameMaxLen = conf.UserRules.UsernameMaxLen
+	}
+
+	return nil
 }

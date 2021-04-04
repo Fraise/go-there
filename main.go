@@ -34,6 +34,12 @@ func main() {
 		log.Fatal().Err(err).Send()
 	}
 
+	err = api.ApplyUserSettings(conf)
+
+	if err != nil {
+		log.Fatal().Err(err).Send()
+	}
+
 	logFile, err := logging.Init(conf)
 
 	if err != nil {
