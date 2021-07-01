@@ -10,6 +10,26 @@ logging and monitoring out of the box.
 
 It is currently a work in progress, and the API should not be considered stable before version 1.0.
 
+## Installation
+### Binary
+
+To create a binary of go-there, you will need to first install the [latest Go binary SDK](https://golang.org/dl/) then
+compile it by running `make` (or `make build-static` is you want a statically linked binary).
+
+You will need to set up a database (currently only mysql is supported) with the schema described 
+[here](.test/db/go-there.sql) and add the settings to the go-there configuration file.
+
+A cache layer is also recommended for faster operation. You can set up a local and networking cache using Redis, then
+add the settings to the go-there configuration file. For low usage servers, the local cache should be enough.
+
+A description of the configuration options can be found in the [Configuration section](#Configuration).
+Most of them need to be setup for the server to work. You can also find examples 
+[in the .examples folder](https://github.com/Fraise/go-there/tree/master/.examples).
+
+### Docker
+
+*WIP*
+
 ## API
 
 You can find the API documentation on [this page](https://fraise.github.io/go-there/).
@@ -42,7 +62,7 @@ X-Auth-Token: eyJ0b2tlbiI6IlFuc1llRE00aGZZS0wtdUFQamZOTVZMNGNUWV[...]saWNlX2dlbi
 ```
 
 If multiple authentication methods are used at the same time, the validation order is : auth token, API key,
-basic auth. Only the first found will be parsed.
+basic auth. Only the first one found will be parsed.
 
 
 ### Generate credentials
