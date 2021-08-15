@@ -14,6 +14,7 @@ type Configuration struct {
 	Database  Database
 	Endpoints map[string]Endpoint
 	Logs      Logs
+	UserRules UserRules
 }
 
 // Endpoint represents the configuration of each endpoint group.
@@ -26,15 +27,16 @@ type Endpoint struct {
 
 // Server represents the server configuration.
 type Server struct {
-	Mode            string
-	ListenAddress   string
-	HttpListenPort  int
-	HttpsListenPort int
-	UseAutoCert     bool
-	Domains         []string
-	CertCache       string
-	CertPath        string
-	KeyPath         string
+	Mode              string
+	ListenAddress     string
+	HttpListenPort    int
+	HttpsListenPort   int
+	UseAutoCert       bool
+	Domains           []string
+	CertCache         string
+	CertPath          string
+	KeyPath           string
+	JwtSigningKeyPath string
 }
 
 // Cache represents the cache configuration.
@@ -66,6 +68,16 @@ type Database struct {
 type Logs struct {
 	File   string
 	AsJSON bool
+}
+
+// UserRules represents the validation rules for user creation.
+type UserRules struct {
+	UsernameRegex  string
+	UsernameMinLen int
+	UsernameMaxLen int
+	PasswordRegex  string
+	PasswordMinLen int
+	PasswordMaxLen int
 }
 
 // Init initialize the Configuration global variable, then tries to parse the provided configuration file. If an empty path is

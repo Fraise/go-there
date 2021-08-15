@@ -217,7 +217,7 @@ func (ds *DataBase) UpdateUserPassword(user data.User) error {
 	return nil
 }
 
-// UpdateUserPassword updates an user's API key in the database. Returns a data.ErrSql if it fails.
+// UpdateUserApiKey updates an user's API key in the database. Returns a data.ErrSql if it fails.
 func (ds *DataBase) UpdateUserApiKey(user data.User) error {
 	_, err := ds.db.NamedExec("UPDATE users SET api_key_hash=:api_key_hash WHERE username=:username", user)
 
@@ -279,79 +279,6 @@ func (ds *DataBase) InsertPath(path data.Path) error {
 // DeletePath deletes a data.Path in the database. Returns a data.ErrSql if it fails.
 func (ds *DataBase) DeletePath(path data.Path) error {
 	_, err := ds.db.NamedExec("DELETE FROM go WHERE path=:path AND user_id=:user_id", path)
-
-	if err != nil {
-		return fmt.Errorf("%w : %s", data.ErrSql, err)
-	}
-
-	return nil
-}
-
-// InsertAuthToken inserts an authentication token in the database. Returns a data.ErrSql if it fails.
-func (ds *DataBase) InsertAuthToken(authToken data.AuthToken) error {
-	_, err := ds.db.NamedExec("INSERT INTO token (token,expiration_ts,username) VALUES (:token,:expiration_ts,:username)", authToken)
-
-	if err != nil {
-		return fmt.Errorf("%w : %s", data.ErrSql, err)
-	}
-
-	return nil
-}
-
-// UpdateAuthToken inserts an authentication token in the database. Returns a data.ErrSql if it fails.
-func (ds *DataBase) UpdateAuthToken(authToken data.AuthToken) error {
-	_, err := ds.db.NamedExec("UPDATE token SET token=:token,expiration_ts=:expiration_ts WHERE token=:token", authToken)
-
-	if err != nil {
-		return fmt.Errorf("%w : %s", data.ErrSql, err)
-	}
-
-	return nil
-}
-
-// GetAuthToken gets an authorization token in the database from a token string. Returns a data.ErrSqlNoRow if it
-// doesn't exist or data.ErrSql if it fails.
-func (ds *DataBase) GetAuthToken(token string) (data.AuthToken, error) {
-	t := data.AuthToken{}
-	err := ds.db.Get(&t, ds.db.Rebind("SELECT * FROM token WHERE token=?"), token)
-
-	if err != nil {
-		switch {
-		case errors.Is(err, sql.ErrNoRows):
-			return data.AuthToken{}, data.ErrSqlNoRow
-		default:
-			return data.AuthToken{}, fmt.Errorf("%w : %s", data.ErrSql, err)
-		}
-	}
-
-	return t, nil
-}
-
-// GetAuthTokenByUser gets an authorization token in the database from a username. Returns a data.ErrSqlNoRow if it
-// doesn't exist or data.ErrSql if it fails. Always returns the username in the token if the operation is successful.
-func (ds *DataBase) GetAuthTokenByUser(username string) (data.AuthToken, error) {
-	// TODO merge it with GetAuthToken ?
-	t := data.AuthToken{}
-	err := ds.db.Get(&t, ds.db.Rebind("SELECT * FROM token WHERE username=?"), username)
-
-	if err != nil {
-		switch {
-		case errors.Is(err, sql.ErrNoRows):
-			return data.AuthToken{
-				Username: username,
-			}, data.ErrSqlNoRow
-		default:
-			return data.AuthToken{}, fmt.Errorf("%w : %s", data.ErrSql, err)
-		}
-	}
-
-	return t, nil
-}
-
-// DeletePath deletes a data.AuthToken in the database from the username or token string. Returns a data.ErrSql if it
-// fails.
-func (ds *DataBase) DeleteAuthToken(authToken data.AuthToken) error {
-	_, err := ds.db.NamedExec("DELETE FROM token WHERE username=:username OR token=:token ", authToken)
 
 	if err != nil {
 		return fmt.Errorf("%w : %s", data.ErrSql, err)

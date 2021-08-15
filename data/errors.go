@@ -13,10 +13,16 @@ var (
 // Auth errors
 var (
 	ErrInvalidKey  = errors.New("auth: invalid api key")
+	ErrInvalidJwt  = errors.New("auth: invalid JWT")
 	ErrInvalidAuth = errors.New("auth: invalid authentication")
 )
 
 // Init errors
 var (
 	ErrInit = errors.New("init: failed")
+)
+
+// Settings errors
+var (
+	ErrSettings = errors.New("settings: failed parsing")
 )

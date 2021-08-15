@@ -1,15 +1,14 @@
 package api
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"go-there/auth"
 	"go-there/config"
 	"go-there/data"
 	"go-there/logging"
+	"regexp"
 )
-
-const authTokenLength = 128
-const authTokenExpiration = 30 * 24 * 3600 // TODO make it configurable
 
 // DataSourcer represents the database.DataSource methods needed by the api package to access the data.
 type DataSourcer interface {
@@ -24,11 +23,6 @@ type DataSourcer interface {
 	UpdateUserApiKey(user data.User) error
 	InsertPath(path data.Path) error
 	DeletePath(path data.Path) error
-	InsertAuthToken(authToken data.AuthToken) error
-	UpdateAuthToken(authToken data.AuthToken) error
-	GetAuthToken(token string) (data.AuthToken, error)
-	GetAuthTokenByUser(username string) (data.AuthToken, error)
-	DeleteAuthToken(authToken data.AuthToken) error
 }
 
 // Init initializes the API paths from the provided configuration and add them to the *gin.Engine.
@@ -104,7 +98,7 @@ func Init(conf *config.Configuration, e *gin.Engine, ds DataSourcer) {
 		path.DELETE("", getDeletePathHandler(ds))
 	}
 
-	ep = conf.Endpoints["auth_token"]
+	ep = conf.Endpoints["jwt_token"]
 	if ep.Enabled {
 		// Init /api/auth route
 		path := e.Group("/api/auth")
@@ -118,7 +112,53 @@ func Init(conf *config.Configuration, e *gin.Engine, ds DataSourcer) {
 			path.Use(auth.GetPermissionsMiddleware(ep.AdminOnly))
 		}
 
-		path.GET("", getAuthTokenHandler(ds))
-		path.DELETE("", getDeleteAuthTokenHandler(ds))
+		path.GET("", getGetJwtHandler())
 	}
+}
+
+// ApplyUserSettings parses the username and password rules, then apply them to the global variables. If a rule has a
+// zero value, the default rules are used. Returns an data.ErrSettings if an error happens.
+func ApplyUserSettings(conf *config.Configuration) error {
+	if conf.UserRules.UsernameRegex != "" {
+		r, err := regexp.Compile(conf.UserRules.UsernameRegex)
+
+		if err != nil {
+			return fmt.Errorf("%w : %s", data.ErrSettings, err)
+		}
+
+		usernameRegexp = r
+	}
+
+	if conf.UserRules.PasswordRegex != "" {
+		r, err := regexp.Compile(conf.UserRules.PasswordRegex)
+
+		if err != nil {
+			return fmt.Errorf("%w : %s", data.ErrSettings, err)
+		}
+
+		passwordRegexp = r
+	}
+
+	// Set username and password size limits
+	if passwordMinLen > passwordMaxLen || usernameMinLen > usernameMaxLen {
+		return fmt.Errorf("%w : %s", data.ErrSettings, "invalid username or password validation")
+	}
+
+	if conf.UserRules.PasswordMinLen != 0 {
+		passwordMinLen = conf.UserRules.PasswordMinLen
+	}
+
+	if conf.UserRules.PasswordMaxLen != 0 {
+		passwordMaxLen = conf.UserRules.PasswordMaxLen
+	}
+
+	if conf.UserRules.UsernameMinLen != 0 {
+		usernameMinLen = conf.UserRules.UsernameMinLen
+	}
+
+	if conf.UserRules.UsernameMaxLen != 0 {
+		usernameMaxLen = conf.UserRules.UsernameMaxLen
+	}
+
+	return nil
 }

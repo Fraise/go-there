@@ -25,12 +25,12 @@ securityDefinitions:
     type: "apiKey"
     name: "X-Api-Key"
     in: "header"
-  TokenAuth:
-    type: "apiKey"
-    name: "X-Auth-Token"
-    in: "header"
   BasicAuth:
     type: "basic"
+  Bearer:
+    type: "apiKey"
+    name: "Authorization"
+    in: "header"
 paths:
   /api/users:
     post:

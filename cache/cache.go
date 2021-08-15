@@ -132,46 +132,6 @@ func (cache *Cache) DeleteTargets(paths []string) error {
 	return nil
 }
 
-// GetAuthToken gets a data.AuthToken from the token. Returns a data.ErrRedis if it fails. Returns an empty token, nil
-// if no cache exists.
-func (cache *Cache) GetAuthToken(token string) (data.AuthToken, error) {
-	if cache == nil {
-		return data.AuthToken{}, nil
-	}
-
-	var authToken data.AuthToken
-	err := cache.rc.Get(context.Background(), token, &authToken)
-
-	if err != nil {
-		if !errors.Is(err, rediscache.ErrCacheMiss) {
-			return data.AuthToken{}, fmt.Errorf("%w: %s", data.ErrRedis, err)
-		}
-	}
-
-	return authToken, nil
-}
-
-// AddAuthToken adds an data.AuthToken to the cache with a ttl of 1 hour. Returns a data.ErrRedis if it fails. Returns
-// nil if no cache exists.
-func (cache *Cache) AddAuthToken(authToken data.AuthToken) error {
-	if cache == nil {
-		return nil
-	}
-
-	err := cache.rc.Set(&rediscache.Item{
-		Ctx:   context.Background(),
-		Key:   authToken.Token,
-		Value: authToken,
-		TTL:   time.Hour,
-	})
-
-	if err != nil {
-		return fmt.Errorf("%w: %s", data.ErrRedis, err)
-	}
-
-	return err
-}
-
 // DeleteAuthToken deletes the auth token provided. Returns a data.ErrRedis if it fails.
 // Returns nil if no cache exists.
 func (cache *Cache) DeleteAuthToken(authToken string) error {

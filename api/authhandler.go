@@ -1,19 +1,17 @@
 package api
 
 import (
-	"encoding/base64"
-	"encoding/json"
-	"errors"
+	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/lestrrat-go/jwx/jwa"
+	"github.com/lestrrat-go/jwx/jwt"
 	"go-there/auth"
 	"go-there/data"
 	"net/http"
 	"time"
 )
 
-// getAuthTokenHandler returns a gin handler for GET requests for a session token. Returns http.StatusBadRequest if the
-// user is anonymous.
-func getAuthTokenHandler(ds DataSourcer) func(c *gin.Context) {
+func getGetJwtHandler() func(c *gin.Context) {
 	return func(c *gin.Context) {
 		u := auth.GetLoggedUser(c)
 
@@ -22,93 +20,33 @@ func getAuthTokenHandler(ds DataSourcer) func(c *gin.Context) {
 			return
 		}
 
-		token, err := ds.GetAuthTokenByUser(u.Username)
-
-		if err != nil {
-			switch {
-			case errors.Is(err, data.ErrSql):
-				c.AbortWithStatus(http.StatusInternalServerError)
-				_ = c.Error(err)
-				return
-			}
+		t := jwt.New()
+		if err := t.Set(jwt.ExpirationKey, time.Now().Add(time.Hour*24*7).Unix()); err != nil {
+			c.AbortWithStatus(http.StatusInternalServerError)
+			_ = c.Error(fmt.Errorf("error creating a JWT: %w", err))
+			return
+		}
+		if err := t.Set("username", u.Username); err != nil {
+			c.AbortWithStatus(http.StatusInternalServerError)
+			_ = c.Error(fmt.Errorf("error creating a JWT: %w", err))
+			return
+		}
+		if err := t.Set("is_admin", u.IsAdmin); err != nil {
+			c.AbortWithStatus(http.StatusInternalServerError)
+			_ = c.Error(fmt.Errorf("error creating a JWT: %w", err))
+			return
 		}
 
-		// If the token does not exist, generate one
-		if token.Token == "" {
-			token.Token, err = auth.GenerateRandomB64String(authTokenLength)
+		var err error
 
-			if err != nil {
-				c.AbortWithStatus(http.StatusInternalServerError)
-				_ = c.Error(err)
-				return
-			}
-
-			token.ExpirationTS = time.Now().Unix() + authTokenExpiration
-			token.Username = u.Username
-
-			err = ds.InsertAuthToken(token)
-
-			if err != nil {
-				c.AbortWithStatus(http.StatusInternalServerError)
-				_ = c.Error(err)
-				return
-			}
-		} else if token.ExpirationTS < time.Now().Unix() {
-			// If the token is expired, generate a new one and update the DB entry
-			token.Token, err = auth.GenerateRandomB64String(authTokenLength)
-
-			if err != nil {
-				c.AbortWithStatus(http.StatusInternalServerError)
-				_ = c.Error(err)
-				return
-			}
-
-			token.ExpirationTS = time.Now().Unix() + authTokenExpiration
-
-			err = ds.UpdateAuthToken(token)
-
-			if err != nil {
-				c.AbortWithStatus(http.StatusInternalServerError)
-				_ = c.Error(err)
-				return
-			}
-		}
-
-		b64Token, err := json.Marshal(token)
+		jwtBytes, err := jwt.Sign(t, jwa.RS256, auth.JwtSigningKey)
 
 		if err != nil {
 			c.AbortWithStatus(http.StatusInternalServerError)
-			_ = c.Error(err)
+			_ = c.Error(fmt.Errorf("error signing a JWT: %w", err))
 			return
 		}
 
-		c.JSON(http.StatusOK, data.B64AuthToken{
-			B64AuthToken: base64.StdEncoding.EncodeToString(b64Token),
-		})
-	}
-}
-
-// getDeleteAuthTokenHandler returns a gin handler for GET requests for a session token. Returns http.StatusBadRequest
-// if the user is anonymous.
-func getDeleteAuthTokenHandler(ds DataSourcer) func(c *gin.Context) {
-	return func(c *gin.Context) {
-		u := auth.GetLoggedUser(c)
-
-		if u.Username == "" {
-			c.AbortWithStatus(http.StatusBadRequest)
-			return
-		}
-
-		err := ds.DeleteAuthToken(data.AuthToken{
-			Username: u.Username,
-		})
-
-		if err != nil {
-			c.AbortWithStatus(http.StatusInternalServerError)
-			_ = c.Error(err)
-			return
-		}
-
-		c.Status(http.StatusOK)
+		c.JSON(http.StatusOK, data.JwtResponse{Jwt: string(jwtBytes)})
 	}
 }
