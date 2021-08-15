@@ -13,6 +13,7 @@ var (
 // Auth errors
 var (
 	ErrInvalidKey  = errors.New("auth: invalid api key")
+	ErrInvalidJwt  = errors.New("auth: invalid JWT")
 	ErrInvalidAuth = errors.New("auth: invalid authentication")
 )
 

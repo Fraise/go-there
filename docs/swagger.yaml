@@ -25,10 +25,6 @@ securityDefinitions:
     type: "apiKey"
     name: "X-Api-Key"
     in: "header"
-  TokenAuth:
-    type: "apiKey"
-    name: "X-Auth-Token"
-    in: "header"
   BasicAuth:
     type: "basic"
 paths:

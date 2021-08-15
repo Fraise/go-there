@@ -27,15 +27,16 @@ type Endpoint struct {
 
 // Server represents the server configuration.
 type Server struct {
-	Mode            string
-	ListenAddress   string
-	HttpListenPort  int
-	HttpsListenPort int
-	UseAutoCert     bool
-	Domains         []string
-	CertCache       string
-	CertPath        string
-	KeyPath         string
+	Mode              string
+	ListenAddress     string
+	HttpListenPort    int
+	HttpsListenPort   int
+	UseAutoCert       bool
+	Domains           []string
+	CertCache         string
+	CertPath          string
+	KeyPath           string
+	JwtSigningKeyPath string
 }
 
 // Cache represents the cache configuration.

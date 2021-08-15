@@ -1,15 +1,72 @@
 package auth
 
 import (
-	"encoding/base64"
-	"encoding/json"
-	"errors"
+	"crypto/rand"
+	"crypto/rsa"
+	"crypto/x509"
+	"encoding/pem"
 	"github.com/gin-gonic/gin"
+	"github.com/rs/zerolog/log"
+	"go-there/config"
 	"go-there/data"
 	"golang.org/x/crypto/bcrypt"
+	"io/ioutil"
 	"net/http"
-	"time"
+	"os"
 )
+
+var JwtSigningKey *rsa.PrivateKey
+
+func InitJwtSigningKey(config *config.Configuration) {
+	if config.Server.JwtSigningKeyPath == "" {
+		log.Fatal().Msg("invalid JWT signing key")
+	}
+
+	if _, err := os.Stat(config.Server.JwtSigningKeyPath); os.IsNotExist(err) {
+		log.Warn().Msg("JWT signing key, trying to generate one")
+
+		JwtSigningKey, err = rsa.GenerateKey(rand.Reader, 4096)
+
+		if err != nil {
+			log.Fatal().Err(err).Msg("could not generate JWT signing key")
+		}
+
+		keyBytes, err := x509.MarshalPKCS8PrivateKey(JwtSigningKey)
+
+		if err != nil {
+			log.Fatal().Err(err).Msg("could not marshal JWT signing key to disk")
+		}
+
+		err = ioutil.WriteFile(config.Server.JwtSigningKeyPath, keyBytes, 0700)
+
+		if err != nil {
+			log.Fatal().Err(err).Msg("could not marshal JWT signing key to disk")
+		}
+
+		log.Info().Msg("successfully generated JWT signing key")
+	} else {
+		keyString, err := ioutil.ReadFile(config.Server.JwtSigningKeyPath)
+
+		if err != nil {
+			log.Fatal().Err(err).Msg("error reading JWT signing key from file")
+		}
+
+		block, _ := pem.Decode(keyString)
+		parseResult, err := x509.ParsePKCS8PrivateKey(block.Bytes)
+
+		if err != nil {
+			log.Fatal().Err(err).Msg("error parsing JWT signing key")
+		}
+
+		var ok bool
+		JwtSigningKey, ok = parseResult.(*rsa.PrivateKey)
+
+		if !ok {
+			log.Fatal().Err(err).Msg("error JWT signing key type, must be RSA")
+		}
+	}
+
+}
 
 // GetAuthMiddleware returns a gin middleware used for authentication. This middleware first tries to bind either a
 // X-Api-Key header in a data.HeaderLogin struct or the data contained either in the body or as parameters into a
@@ -21,79 +78,6 @@ func GetAuthMiddleware(ds DataSourcer) func(c *gin.Context) {
 		// Tries to bind authentication headers first
 		if err := c.ShouldBindHeader(&hl); err != nil {
 			c.AbortWithStatus(http.StatusBadRequest)
-			return
-		}
-
-		// Check token first
-		if hl.XAuthToken != "" {
-			var t data.AuthToken
-			var err error
-
-			// X-Auth-Token is in b64, so we need to decode it first
-			decodedXAuthToken, err := base64.StdEncoding.DecodeString(hl.XAuthToken)
-
-			if err != nil {
-				c.AbortWithStatus(http.StatusBadRequest)
-				return
-			}
-
-			err = json.Unmarshal(decodedXAuthToken, &t)
-
-			if err != nil {
-				c.AbortWithStatus(http.StatusBadRequest)
-				return
-			}
-
-			// If the header contains a session token, do not bind the other fields
-			dbToken, err := ds.GetAuthToken(t.Token)
-
-			if err != nil {
-				switch {
-				case errors.Is(err, data.ErrSqlNoRow):
-					c.AbortWithStatus(http.StatusUnauthorized)
-					return
-				default:
-					c.AbortWithStatus(http.StatusInternalServerError)
-					_ = c.Error(err)
-					return
-				}
-			}
-
-			if dbToken.Username != t.Username {
-				c.AbortWithStatus(http.StatusUnauthorized)
-				return
-			}
-
-			if dbToken.ExpirationTS < time.Now().Unix() {
-				c.AbortWithStatusJSON(http.StatusUnauthorized, data.ErrorResponse{Error: "token expired"})
-			} else if dbToken.ExpirationTS < time.Now().Unix()+604800 {
-				// If the expiration date if in less than 1 week, renew it
-				dbToken.ExpirationTS = time.Now().Unix()
-
-				err := ds.UpdateAuthToken(dbToken)
-
-				// This can fail silently for the user, but it still needs to be reported to the system
-				if err != nil {
-					_ = c.Error(err)
-				}
-			}
-
-			u, err := ds.SelectUserLogin(dbToken.Username)
-
-			if err != nil {
-				c.AbortWithStatus(http.StatusInternalServerError)
-				_ = c.Error(err)
-				return
-			}
-
-			c.Keys = make(map[string]interface{})
-
-			// Keep track of the user if he successfully authenticated
-			c.Keys["user"] = u
-			c.Keys["logUser"] = dbToken.Username
-			// Keep track of which user data we want to access
-			c.Keys["reqUser"] = c.Param("user")
-
 			return
 		}
 
@@ -138,32 +122,44 @@ func GetAuthMiddleware(ds DataSourcer) func(c *gin.Context) {
 			return
 		}
 
-		// Check basic auth
+		// Check basic auth and bearer token
 		if hl.Authorization != "" {
-			l, err := basicAuthToLogin(hl.Authorization)
+			ld, err := authHeaderToLoginData(hl.Authorization)
 
 			if err != nil {
 				c.AbortWithStatus(http.StatusBadRequest)
 				return
 			}
 
-			u, err := ds.SelectUserLogin(l.Username)
+			u := data.User{}
 
-			if err != nil {
-				c.AbortWithStatus(http.StatusInternalServerError)
-				_ = c.Error(err)
-				return
-			}
+			if ld.DataType == data.Basic {
+				u, err = ds.SelectUserLogin(ld.BasicAuthLogin.Username)
 
-			if u.Username == "" {
-				c.AbortWithStatus(http.StatusUnauthorized)
-			}
+				if err != nil {
+					c.AbortWithStatus(http.StatusUnauthorized)
+					return
+				}
 
-			err = bcrypt.CompareHashAndPassword(u.PasswordHash, []byte(l.Password))
+				err = bcrypt.CompareHashAndPassword(u.PasswordHash, []byte(ld.BasicAuthLogin.Password))
 
-			if err != nil {
-				c.AbortWithStatus(http.StatusUnauthorized)
-				return
+				if err != nil {
+					c.AbortWithStatus(http.StatusUnauthorized)
+					return
+				}
+			} else {
+				if ld.IsExpired() {
+					c.AbortWithStatus(http.StatusUnauthorized)
+					return
+				}
+
+				// We still check if the user has not been deleted before his token expired
+				u, err = ds.SelectUserLogin(ld.BasicAuthLogin.Username)
+
+				if err != nil {
+					c.AbortWithStatus(http.StatusUnauthorized)
+					return
+				}
 			}
 
 			c.Keys = make(map[string]interface{})

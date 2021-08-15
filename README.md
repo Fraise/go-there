@@ -55,13 +55,7 @@ The API key can be provided in a `X-Api-Key` header:
 X-Api-Key: bi44RkM4YWwueFE0d2RvTkF5akpJTzpPSC1rbkdMcm91VlA3N01pZkJ1Y0F3PT0=
 ```
 
-The authentication token can be provided in an `X-Auth-Token` header :
-
-```http request
-X-Auth-Token: eyJ0b2tlbiI6IlFuc1llRE00aGZZS0wtdUFQamZOTVZMNGNUWV[...]saWNlX2dlbiJ9
-```
-
-If multiple authentication methods are used at the same time, the validation order is : auth token, API key,
+If multiple authentication methods are used at the same time, the validation order is : API key,
 basic auth. Only the first one found will be parsed.
 
 
@@ -108,6 +102,8 @@ exist, it is created
 `CertPath` Path to a manually provided certificate. Is ignored if `UseAutoCert` is set to `true`
 
 `KeyPath` Path to a manually provided server key. Is ignored if `UseAutoCert` is set to `true`
+
+`JwtSigningKeyPath` Path to the key used to sign JWT tokens. Will be created at startup if it does not exist
 
 ### [Endpoints]
 

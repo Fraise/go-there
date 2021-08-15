@@ -13,8 +13,6 @@ type DataSourcer interface {
 	SelectUserLogin(username string) (data.User, error)
 	SelectUserLoginByApiKeyHash(apiKeyHash string) (data.User, error)
 	GetTarget(path string) (string, error)
-	GetAuthToken(token string) (data.AuthToken, error)
-	UpdateAuthToken(authToken data.AuthToken) error
 }
 
 // Init initializes the redirect paths from the provided configuration and add them to the *gin.Engine.

@@ -19,15 +19,3 @@ CREATE TABLE `go` (
         REFERENCES users (id)
         ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-
-
-CREATE TABLE `token` (
-    `token` varchar(255) DEFAULT NULL,
-    `expiration_ts` int DEFAULT NULL,
-    `username` varchar(255),
-    INDEX (token),
-    UNIQUE (token),
-    FOREIGN KEY (username)
-        REFERENCES users (username)
-        ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
