@@ -14,6 +14,7 @@ type B64AuthToken struct {
 	B64AuthToken string `json:"b64_auth_token"`
 }
 
+// LoginData represents the data sent by the user to login
 type LoginData struct {
 	DataType int
 	BasicAuthLogin
@@ -39,5 +40,5 @@ type JwtLogin struct {
 
 // IsExpired returns true if the JWT is expired.
 func (jl JwtLogin) IsExpired() bool {
-	return time.Now().UTC().Before(jl.ExpiresAt)
+	return time.Now().UTC().After(jl.ExpiresAt)
 }

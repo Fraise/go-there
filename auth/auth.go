@@ -146,7 +146,7 @@ func basicAuthToLogin(basicAuth string) (data.BasicAuthLogin, error) {
 // jwtToLogin takes a JWT token string and returns a data.JwtLogin if the token is valid or an data.ErrInvalidJwt
 // otherwise.
 func jwtToLogin(jwtAuth string) (data.JwtLogin, error) {
-	token, err := jwt.Parse([]byte(jwtAuth), jwt.WithValidate(true), jwt.WithVerify(jwa.RS256, JwtSigningKey))
+	token, err := jwt.Parse([]byte(jwtAuth), jwt.WithValidate(true), jwt.WithVerify(jwa.RS256, JwtSigningKey.PublicKey))
 
 	if err != nil {
 		return data.JwtLogin{}, fmt.Errorf("%w : %s", data.ErrInvalidJwt, err)

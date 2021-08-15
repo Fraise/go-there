@@ -27,6 +27,10 @@ securityDefinitions:
     in: "header"
   BasicAuth:
     type: "basic"
+  Bearer:
+    type: "apiKey"
+    name: "Authorization"
+    in: "header"
 paths:
   /api/users:
     post:

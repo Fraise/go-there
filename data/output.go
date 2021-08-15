@@ -7,7 +7,7 @@ type ApiKeyResponse struct {
 
 // JwtResponse should be returned when querying the auth endpoint.
 type JwtResponse struct {
-	Jwt []byte `json:"jwt,omitempty"`
+	Jwt string `json:"jwt,omitempty"`
 }
 
 // ErrorResponse should be returned to the user when additional context is needed when an error occurs.

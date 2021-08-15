@@ -7,6 +7,7 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"go-there/api"
+	"go-there/auth"
 	"go-there/cache"
 	"go-there/config"
 	"go-there/database"
@@ -70,6 +71,8 @@ func main() {
 	}
 
 	ds := datasource.Init(db, cache.Init(conf))
+
+	auth.InitJwtSigningKey(conf)
 
 	health.Init(conf, e)
 	gopath.Init(conf, e, ds)

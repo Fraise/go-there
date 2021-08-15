@@ -17,13 +17,15 @@ import (
 
 var JwtSigningKey *rsa.PrivateKey
 
+// InitJwtSigningKey initialize the RSA key used to sign JWT token. If one doesn't exist, it will be created at the
+// path in the config.
 func InitJwtSigningKey(config *config.Configuration) {
 	if config.Server.JwtSigningKeyPath == "" {
 		log.Fatal().Msg("invalid JWT signing key")
 	}
 
 	if _, err := os.Stat(config.Server.JwtSigningKeyPath); os.IsNotExist(err) {
-		log.Warn().Msg("JWT signing key, trying to generate one")
+		log.Warn().Msg("no JWT signing key, trying to generate one")
 
 		JwtSigningKey, err = rsa.GenerateKey(rand.Reader, 4096)
 
@@ -34,10 +36,17 @@ func InitJwtSigningKey(config *config.Configuration) {
 		keyBytes, err := x509.MarshalPKCS8PrivateKey(JwtSigningKey)
 
 		if err != nil {
-			log.Fatal().Err(err).Msg("could not marshal JWT signing key to disk")
+			log.Fatal().Err(err).Msg("could not marshal JWT signing key")
 		}
 
-		err = ioutil.WriteFile(config.Server.JwtSigningKeyPath, keyBytes, 0700)
+		pemBytes := pem.EncodeToMemory(
+			&pem.Block{
+				Type:  "RSA PRIVATE KEY",
+				Bytes: keyBytes,
+			},
+		)
+
+		err = ioutil.WriteFile(config.Server.JwtSigningKeyPath, pemBytes, 0700)
 
 		if err != nil {
 			log.Fatal().Err(err).Msg("could not marshal JWT signing key to disk")
@@ -154,7 +163,7 @@ func GetAuthMiddleware(ds DataSourcer) func(c *gin.Context) {
 				}
 
 				// We still check if the user has not been deleted before his token expired
-				u, err = ds.SelectUserLogin(ld.BasicAuthLogin.Username)
+				u, err = ds.SelectUserLogin(ld.JwtLogin.User.Username)
 
 				if err != nil {
 					c.AbortWithStatus(http.StatusUnauthorized)

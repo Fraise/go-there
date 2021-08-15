@@ -39,8 +39,7 @@ func getGetJwtHandler() func(c *gin.Context) {
 
 		var err error
 
-		var jwtResponse data.JwtResponse
-		jwtResponse.Jwt, err = jwt.Sign(t, jwa.RS256, auth.JwtSigningKey)
+		jwtBytes, err := jwt.Sign(t, jwa.RS256, auth.JwtSigningKey)
 
 		if err != nil {
 			c.AbortWithStatus(http.StatusInternalServerError)
@@ -48,6 +47,6 @@ func getGetJwtHandler() func(c *gin.Context) {
 			return
 		}
 
-		c.JSON(http.StatusOK, jwtResponse)
+		c.JSON(http.StatusOK, data.JwtResponse{Jwt: string(jwtBytes)})
 	}
 }

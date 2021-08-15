@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-var bobB64Token string
+var bobJwtToken string
 var bobApiKey string
 
 func TestCreateUserBob(t *testing.T) {
@@ -37,7 +37,7 @@ func TestCreateUserBob(t *testing.T) {
 	}
 }
 
-func TestGetAuthTokenBob(t *testing.T) {
+func TestGetJwtTokenBob(t *testing.T) {
 	type CreatePath struct {
 		Path   string `json:"path"`
 		Target string `json:"target"`
@@ -48,17 +48,13 @@ func TestGetAuthTokenBob(t *testing.T) {
 	resp := e.GET("/api/auth").WithHeader("X-Api-Key", bobApiKey).
 		Expect().Status(http.StatusOK)
 
-	type AuthToken struct {
-		Token string `json:"token"`
-	}
-
-	token := resp.JSON().Object().Value("b64_auth_token").Raw()
+	token := resp.JSON().Object().Value("jwt").Raw()
 
 	assert.NotEmpty(t, token)
 
 	switch token.(type) {
 	case string:
-		bobB64Token = token.(string)
+		bobJwtToken = token.(string)
 	default:
 		assert.Fail(t, "wrong type")
 	}
@@ -77,7 +73,7 @@ func TestCreateRedirectBob(t *testing.T) {
 
 	e := httpexpect.New(t, "http://go-there:8080")
 
-	e.POST("/api/path").WithHeader("X-Auth-Token", bobB64Token).WithJSON(cp).
+	e.POST("/api/path").WithHeader("Authorization", "Bearer "+bobJwtToken).WithJSON(cp).
 		Expect().Status(http.StatusOK)
 }
 
@@ -103,6 +99,6 @@ func TestFollowRedirectBob(t *testing.T) {
 func TestDeleteBob(t *testing.T) {
 	e := httpexpect.New(t, "http://go-there:8080")
 
-	e.DELETE("/api/users/bob").WithHeader("X-Auth-Token", bobB64Token).
+	e.DELETE("/api/users/bob").WithHeader("Authorization", "Bearer "+bobJwtToken).
 		Expect().Status(http.StatusOK)
 }
